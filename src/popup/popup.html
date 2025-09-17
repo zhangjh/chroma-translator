@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Extension</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">翻译助手</h1>
+            <button class="settings-btn" id="settingsBtn" title="设置">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 10v6m11-7h-6m-10 0H1m15.5-3.5L19 8.5m-14 7L7.5 13M16.5 10.5L19 8.5m-14 7L7.5 13"></path>
+                </svg>
+            </button>
+        </header>
+
+        <div class="translation-section">
+            <!-- 输入区域 -->
+            <div class="input-section">
+                <div class="language-info">
+                    <span class="language-label">检测到:</span>
+                    <span class="detected-language" id="detectedLanguage">自动检测</span>
+                </div>
+                <textarea 
+                    class="input-text" 
+                    id="inputText" 
+                    placeholder="输入要翻译的文本..."
+                    rows="4"
+                ></textarea>
+            </div>
+
+            <!-- 语言选择和翻译按钮 -->
+            <div class="controls-section">
+                <div class="language-selector">
+                    <label for="targetLanguage" class="language-label">翻译到:</label>
+                    <select class="language-select" id="targetLanguage">
+                        <option value="en">English</option>
+                        <option value="zh-CN">中文(简体)</option>
+                        <option value="zh-TW">中文(繁體)</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="es">Español</option>
+                        <option value="ru">Русский</option>
+                    </select>
+                </div>
+                <button class="translate-btn" id="translateBtn">
+                    <span class="btn-text">翻译</span>
+                    <div class="btn-loading" id="btnLoading">
+                        <div class="spinner"></div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-section" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">翻译中...</div>
+            </div>
+
+            <!-- 结果区域 -->
+            <div class="result-section" id="resultSection">
+                <div class="result-header">
+                    <span class="result-label">翻译结果:</span>
+                    <button class="copy-btn" id="copyBtn" title="复制">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="result-text" id="resultText"></div>
+            </div>
+
+            <!-- 错误提示 -->
+            <div class="error-section" id="errorSection">
+                <div class="error-message" id="errorMessage"></div>
+                <button class="retry-btn" id="retryBtn">重试</button>
+            </div>
+        </div>
+
+        <!-- 快捷操作 -->
+        <div class="quick-actions">
+            <button class="action-btn" id="translatePageBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                <span>翻译整页</span>
+            </button>
+        </div>
+    </div>
+    <script type="module" src="../../dist/src/popup/popup.js"></script>
+</body>
+</html>

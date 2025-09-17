@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Translation Extension",
+  "version": "1.0.0",
+  "description": "快速翻译工具：支持输入框翻译、选中文本翻译和网页全文翻译，使用Chrome内置翻译API提供高质量翻译服务",
+  "author": "Chrome Translation Extension Team",
+  "homepage_url": "https://github.com/chrome-translation-extension",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [],
+  "action": {
+    "default_popup": "dist/popup/popup.html",
+    "default_title": "Chrome Translation Extension - 快速翻译工具"
+  },
+  "background": {
+    "service_worker": "dist/src/background/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "dist/src/content/content.js"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "options_page": "src/options/options.html",
+  "icons": {
+    "16": "src/icons/translate_16.png",
+    "32": "src/icons/translate_32.png",
+    "48": "src/icons/translate_48.png",
+    "128": "src/icons/translate_128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/content.css"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "minimum_chrome_version": "88"
+}

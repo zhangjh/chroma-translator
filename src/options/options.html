@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Extension Options</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Translation Extension Settings</h1>
+        
+        <!-- Success/Error Messages -->
+        <div id="message" class="message hidden"></div>
+        
+        <!-- Language Settings Section -->
+        <section class="settings-section">
+            <h2>Language Settings</h2>
+            
+            <div class="setting-item">
+                <label for="defaultTargetLanguage">Default Target Language:</label>
+                <select id="defaultTargetLanguage" class="language-select">
+                    <option value="">Loading languages...</option>
+                </select>
+                <p class="setting-description">Choose the default language for translations</p>
+            </div>
+            
+            <div class="setting-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="autoDetectLanguage">
+                    <span class="checkmark"></span>
+                    Auto-detect source language
+                </label>
+                <p class="setting-description">Automatically detect the language of text to translate</p>
+            </div>
+        </section>
+        
+        <!-- Translation Behavior Section -->
+        <section class="settings-section">
+            <h2>Translation Behavior</h2>
+            
+            <div class="setting-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showTranslationTooltip">
+                    <span class="checkmark"></span>
+                    Show translation tooltip for selected text
+                </label>
+                <p class="setting-description">Display translation results in a tooltip when text is selected</p>
+            </div>
+            
+            <div class="setting-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="enableFullPageTranslation">
+                    <span class="checkmark"></span>
+                    Enable full page translation
+                </label>
+                <p class="setting-description">Allow translating entire web pages</p>
+            </div>
+            
+            <div class="setting-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="enableStreamingTranslation">
+                    <span class="checkmark"></span>
+                    Enable streaming translation
+                </label>
+                <p class="setting-description">Show translation results as they become available</p>
+            </div>
+            
+            <div class="setting-item">
+                <label for="translationDelay">Translation Delay (ms):</label>
+                <input type="number" id="translationDelay" min="0" max="5000" step="100" class="number-input">
+                <p class="setting-description">Delay before starting translation to avoid excessive API calls</p>
+            </div>
+        </section>
+        
+        <!-- Keyboard Shortcuts Section -->
+        <section class="settings-section">
+            <h2>Keyboard Shortcuts</h2>
+            
+            <div class="setting-item">
+                <label for="translateSelectedShortcut">Translate Selected Text:</label>
+                <input type="text" id="translateSelectedShortcut" class="shortcut-input" placeholder="e.g., Ctrl+Shift+T">
+                <p class="setting-description">Keyboard shortcut to translate selected text</p>
+            </div>
+            
+            <div class="setting-item">
+                <label for="translateFullPageShortcut">Translate Full Page:</label>
+                <input type="text" id="translateFullPageShortcut" class="shortcut-input" placeholder="e.g., Ctrl+Shift+F">
+                <p class="setting-description">Keyboard shortcut to translate the entire page</p>
+            </div>
+        </section>
+        
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+            <button id="resetSettings" class="btn btn-secondary">Reset to Defaults</button>
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p>Loading settings...</p>
+        </div>
+    </div>
+    <script type="module" src="../../dist/src/options/options.js"></script>
+</body>
+</html>

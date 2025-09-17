@@ -1,0 +1,451 @@
+/* Translation Tooltip Styles */
+.chrome-translate-tooltip {
+  position: fixed;
+  z-index: 2147483647; /* Maximum z-index to ensure tooltip appears above all content */
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 300px;
+  min-width: 200px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: auto;
+}
+
+.chrome-translate-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chrome-translate-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #ffffff;
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.chrome-translate-tooltip.below-selection::before {
+  top: auto;
+  bottom: -8px;
+  border-bottom: none;
+  border-top: 8px solid #ffffff;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.chrome-translate-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chrome-translate-tooltip-title {
+  font-weight: 600;
+  color: #333333;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chrome-translate-tooltip-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666666;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.chrome-translate-tooltip-close:hover {
+  background-color: #f5f5f5;
+  color: #333333;
+}
+
+.chrome-translate-tooltip-content {
+  margin-bottom: 8px;
+}
+
+.chrome-translate-tooltip-original {
+  color: #666666;
+  font-size: 13px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #e0e0e0;
+}
+
+.chrome-translate-tooltip-result {
+  color: #333333;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 8px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  border-left: 3px solid #4285f4;
+}
+
+.chrome-translate-tooltip-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666666;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.chrome-translate-tooltip-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #4285f4;
+  border-radius: 50%;
+  animation: chrome-translate-spin 1s linear infinite;
+}
+
+@keyframes chrome-translate-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.chrome-translate-tooltip-error {
+  color: #d93025;
+  font-size: 13px;
+  padding: 6px 8px;
+  background-color: #fef7f0;
+  border-radius: 4px;
+  border-left: 3px solid #d93025;
+}
+
+.chrome-translate-tooltip-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.chrome-translate-tooltip-button {
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex: 1;
+}
+
+.chrome-translate-tooltip-button:hover {
+  background: #3367d6;
+}
+
+.chrome-translate-tooltip-button:disabled {
+  background: #e0e0e0;
+  color: #999999;
+  cursor: not-allowed;
+}
+
+.chrome-translate-tooltip-button.secondary {
+  background: #f8f9fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+}
+
+.chrome-translate-tooltip-button.secondary:hover {
+  background: #e8f0fe;
+  border-color: #4285f4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .chrome-translate-tooltip {
+    max-width: 280px;
+    min-width: 180px;
+    font-size: 13px;
+  }
+  
+  .chrome-translate-tooltip-actions {
+    flex-direction: column;
+  }
+}
+
+/* Full Page Translation Styles */
+.chrome-translate-updating {
+  background-color: #fff3cd !important;
+  transition: background-color 0.3s ease;
+  position: relative;
+}
+
+.chrome-translate-updating::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(66, 133, 244, 0.1), transparent);
+  animation: chrome-translate-shimmer 1.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes chrome-translate-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.chrome-translate-translated {
+  background-color: #e8f5e8 !important;
+  border-left: 3px solid #34a853 !important;
+  padding-left: 8px !important;
+  transition: all 0.3s ease;
+}
+
+.chrome-translate-processed {
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+/* Progress indicator styles */
+.chrome-translate-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2147483646;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.chrome-translate-progress.visible {
+  transform: translateY(0);
+}
+
+.chrome-translate-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chrome-translate-progress-title {
+  font-weight: 600;
+  color: #333333;
+  font-size: 16px;
+}
+
+.chrome-translate-progress-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.chrome-translate-progress-button {
+  background: #f8f9fa;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chrome-translate-progress-button:hover {
+  background: #e8f0fe;
+  border-color: #4285f4;
+}
+
+.chrome-translate-progress-button.primary {
+  background: #4285f4;
+  color: white;
+  border-color: #4285f4;
+}
+
+.chrome-translate-progress-button.primary:hover {
+  background: #3367d6;
+}
+
+.chrome-translate-progress-button.danger {
+  background: #d93025;
+  color: white;
+  border-color: #d93025;
+}
+
+.chrome-translate-progress-button.danger:hover {
+  background: #b52d20;
+}
+
+.chrome-translate-progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.chrome-translate-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4285f4, #34a853);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.chrome-translate-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #666666;
+}
+
+.chrome-translate-progress-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.chrome-translate-progress-current {
+  font-weight: 500;
+  color: #4285f4;
+}
+
+/* Element highlighting */
+.chrome-translate-current {
+  outline: 2px solid #4285f4 !important;
+  outline-offset: 2px !important;
+  background-color: rgba(66, 133, 244, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .chrome-translate-tooltip {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .chrome-translate-tooltip::before {
+    border-bottom-color: #2d2d2d;
+  }
+  
+  .chrome-translate-tooltip.below-selection::before {
+    border-top-color: #2d2d2d;
+  }
+  
+  .chrome-translate-tooltip-title {
+    color: #e0e0e0;
+  }
+  
+  .chrome-translate-tooltip-close {
+    color: #b0b0b0;
+  }
+  
+  .chrome-translate-tooltip-close:hover {
+    background-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .chrome-translate-tooltip-original {
+    background-color: #383838;
+    color: #b0b0b0;
+    border-left-color: #404040;
+  }
+  
+  .chrome-translate-tooltip-result {
+    background-color: #1a2332;
+    color: #e0e0e0;
+    border-left-color: #4285f4;
+  }
+  
+  .chrome-translate-tooltip-error {
+    background-color: #3d1a1a;
+    color: #ff6b6b;
+    border-left-color: #ff6b6b;
+  }
+  
+  .chrome-translate-tooltip-button.secondary {
+    background: #383838;
+    color: #e0e0e0;
+    border-color: #404040;
+  }
+  
+  .chrome-translate-tooltip-button.secondary:hover {
+    background: #404040;
+    border-color: #4285f4;
+  }
+  
+  /* Dark mode for full page translation */
+  .chrome-translate-updating {
+    background-color: #3d3d1a !important;
+  }
+  
+  .chrome-translate-translated {
+    background-color: #1a3d1a !important;
+    border-left-color: #34a853 !important;
+  }
+  
+  .chrome-translate-progress {
+    background: #2d2d2d;
+    border-bottom-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .chrome-translate-progress-title {
+    color: #e0e0e0;
+  }
+  
+  .chrome-translate-progress-button {
+    background: #383838;
+    color: #e0e0e0;
+    border-color: #404040;
+  }
+  
+  .chrome-translate-progress-button:hover {
+    background: #404040;
+  }
+  
+  .chrome-translate-progress-bar {
+    background-color: #404040;
+  }
+  
+  .chrome-translate-progress-info {
+    color: #b0b0b0;
+  }
+  
+  .chrome-translate-current {
+    outline-color: #4285f4 !important;
+    background-color: rgba(66, 133, 244, 0.2) !important;
+  }
+}
