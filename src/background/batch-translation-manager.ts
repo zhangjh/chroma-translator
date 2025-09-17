@@ -1,8 +1,8 @@
-import { TranslationService } from './translation-service';
+import { TranslationService } from './translation-service.js';
 import { 
   TranslationResult, 
   BatchTranslationProgress, 
-  TranslationStatus} from '../../types/interfaces';
+  TranslationStatus} from '../../types/interfaces.js';
 import { DebounceManager, ErrorHandler, CacheManager } from '../shared/index.js';
 import { CONFIG } from '../../types/constants.js';
 

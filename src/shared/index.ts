@@ -1,9 +1,9 @@
 // Shared modules export
 
-export { SettingsManager } from './settings';
-export { StorageManager, LocalStorageManager } from './storage';
-export { SettingsValidator } from './settings-validator';
-export { ErrorHandler } from './error-handler';
-export { CacheManager } from './cache-manager';
-export { DebounceManager } from './debounce-manager';
-export { PerformanceMonitor } from './performance-monitor';
+export { SettingsManager } from './settings.js';
+export { StorageManager, LocalStorageManager } from './storage.js';
+export { SettingsValidator } from './settings-validator.js';
+export { ErrorHandler } from './error-handler.js';
+export { CacheManager } from './cache-manager.js';
+export { DebounceManager } from './debounce-manager.js';
+export { PerformanceMonitor } from './performance-monitor.js';
