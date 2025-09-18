@@ -2,6 +2,41 @@
 // Chrome AI API types for translation
 
 declare global {
+  // Global LanguageDetector API (Chrome experimental feature)
+  interface LanguageDetectorCreateOptions {
+    monitor?: (monitor: any) => void;
+  }
+
+  interface LanguageDetectorResult {
+    detectedLanguage: string;
+    confidence: number;
+  }
+
+  interface LanguageDetectorInstance {
+    detect(text: string): Promise<LanguageDetectorResult[]>;
+    destroy(): void;
+  }
+
+  const LanguageDetector: {
+    create(options?: LanguageDetectorCreateOptions): Promise<LanguageDetectorInstance>;
+  };
+
+  // Global Translator API (Chrome experimental feature)
+  interface TranslatorCreateOptions {
+    sourceLanguage: string;
+    targetLanguage: string;
+    monitor?: (monitor: any) => void;
+  }
+
+  interface TranslatorInstance {
+    translate(text: string): Promise<string>;
+    destroy(): void;
+  }
+
+  const Translator: {
+    create(options: TranslatorCreateOptions): Promise<TranslatorInstance>;
+  };
+
   namespace chrome {
     namespace ai {
       interface TranslatorCapabilities {

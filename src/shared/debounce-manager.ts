@@ -33,7 +33,7 @@ type QueueProcessor<T> = (item: T) => Promise<void>;
  */
 export class DebounceManager {
   private static instance: DebounceManager;
-  private debounceTimers: Map<string, number> = new Map();
+  private debounceTimers: Map<string, any> = new Map();
   private queues: Map<string, QueueItem<any>[]> = new Map();
   private processors: Map<string, QueueProcessor<any>> = new Map();
   private processingQueues: Set<string> = new Set();
@@ -336,7 +336,7 @@ export class DebounceManager {
     maxBatchSize: number = 10
   ): (item: T) => void {
     let batch: T[] = [];
-    let timer: number | null = null;
+    let timer: any | null = null;
 
     const processBatch = async () => {
       if (batch.length === 0) return;

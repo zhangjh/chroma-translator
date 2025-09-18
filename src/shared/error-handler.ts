@@ -148,23 +148,19 @@ export class ErrorHandler {
    */
   public async checkApiAvailability(): Promise<TranslationError | null> {
     try {
-      // Check if chrome.ai.translator exists
-      if (!chrome?.ai?.translator) {
+      if (!('Translator' in self)) {
+        // The Translator API is supported.
         return this.createError(
           TranslationErrorType.API_UNAVAILABLE,
           'Chrome AI Translation API is not available. Please ensure you are using Chrome 118+ with AI features enabled.'
         );
       }
-
-      // Check API capabilities
-      const capabilities = await chrome.ai.translator.capabilities();
-      if (capabilities.available !== 'readily') {
+      if(!('LanguageDetector' in self)) {
         return this.createError(
           TranslationErrorType.API_UNAVAILABLE,
-          'Chrome Translation API is not ready. Please check your network connection and try again.'
+          'Chrome AI Detect Language API is not available. Please ensure you are using Chrome 118+ with AI features enabled.'
         );
       }
-
       return null; // API is available
     } catch (error) {
       return this.createError(

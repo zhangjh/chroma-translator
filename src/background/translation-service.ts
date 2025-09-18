@@ -9,7 +9,6 @@ import { CacheManager } from '../shared/cache-manager.js';
 export class TranslationService {
   private static instance: TranslationService;
   private isApiAvailable: boolean | null = null;
-  private supportedLanguages: Language[] | null = null;
   private errorHandler: ErrorHandler;
   private cacheManager: CacheManager;
 
@@ -66,7 +65,14 @@ export class TranslationService {
 
     const detectWithRetry = async (): Promise<string> => {
       // Use Chrome's language detection API
-      const detector = await chrome.ai.languageDetector.create();
+
+      const detector = await LanguageDetector.create({
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e: any) => {
+            console.log(`Downloaded ${e.loaded * 100}%`);
+          });
+        },
+      });
       const results = await detector.detect(text);
       
       if (results && results.length > 0) {
@@ -83,45 +89,6 @@ export class TranslationService {
       await this.errorHandler.handleError(error, 'language_detection');
       console.warn('Language detection failed, using fallback');
       return 'auto'; // Graceful fallback
-    }
-  }
-
-  /**
-   * Get list of supported languages
-   * 获取支持语言列表
-   */
-  public async getSupportedLanguages(): Promise<Language[]> {
-    if (this.supportedLanguages) {
-      return this.supportedLanguages;
-    }
-
-    const isAvailable = await this.isTranslationApiAvailable();
-    if (!isAvailable) {
-      // Return mock data when API is not available
-      return this.getMockSupportedLanguages();
-    }
-
-    try {
-      const capabilities = await chrome.ai.translator.capabilities();
-      const languagePairs = capabilities.languagePairs || [];
-      
-      // Extract unique languages from language pairs
-      const languageSet = new Set<string>();
-      languagePairs.forEach(pair => {
-        languageSet.add(pair.sourceLanguage);
-        languageSet.add(pair.targetLanguage);
-      });
-
-      this.supportedLanguages = Array.from(languageSet).map(code => ({
-        code,
-        name: this.getLanguageName(code),
-        nativeName: this.getLanguageNativeName(code)
-      }));
-
-      return this.supportedLanguages;
-    } catch (error) {
-      console.error('Failed to get supported languages:', error);
-      return this.getMockSupportedLanguages();
     }
   }
 
@@ -147,12 +114,6 @@ export class TranslationService {
       return cachedResult;
     }
 
-    const isAvailable = await this.isTranslationApiAvailable();
-    if (!isAvailable) {
-      // Return mock translation when API is not available
-      return this.getMockTranslation(text, sourceLang, targetLang);
-    }
-
     const translateWithRetry = async (): Promise<TranslationResult> => {
       // Detect source language if not provided or is 'auto'
       let detectedSourceLang = sourceLang;
@@ -160,13 +121,12 @@ export class TranslationService {
         detectedSourceLang = await this.detectLanguage(text);
       }
 
-      // Create translator instance
-      const translator = await chrome.ai.translator.create({
+      // Perform translation
+      const translator = await Translator.create({
         sourceLanguage: detectedSourceLang,
         targetLanguage: targetLang
       });
 
-      // Perform translation
       const translatedText = await translator.translate(text);
 
       const result: TranslationResult = {
@@ -195,7 +155,7 @@ export class TranslationService {
   /**
    * Get mock supported languages for fallback
    */
-  private getMockSupportedLanguages(): Language[] {
+  public getSupportedLanguages(): Language[] {
     return [
       { code: 'en', name: 'English', nativeName: 'English' },
       { code: 'zh-CN', name: 'Chinese (Simplified)', nativeName: '中文(简体)' },
@@ -210,59 +170,5 @@ export class TranslationService {
       { code: 'ru', name: 'Russian', nativeName: 'Русский' },
       { code: 'ar', name: 'Arabic', nativeName: 'العربية' }
     ];
-  }
-
-  /**
-   * Get mock translation for fallback
-   */
-  private getMockTranslation(text: string, sourceLang: string, targetLang: string): TranslationResult {
-    return {
-      translatedText: `[Mock Translation] ${text} (${sourceLang} -> ${targetLang})`,
-      detectedLanguage: sourceLang === 'auto' ? 'en' : sourceLang,
-      confidence: 0.8,
-      status: TranslationStatus.COMPLETED
-    };
-  }
-
-  /**
-   * Get language name from language code
-   */
-  private getLanguageName(code: string): string {
-    const languageNames: Record<string, string> = {
-      'en': 'English',
-      'zh-CN': 'Chinese (Simplified)',
-      'zh-TW': 'Chinese (Traditional)',
-      'ja': 'Japanese',
-      'ko': 'Korean',
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German',
-      'it': 'Italian',
-      'pt': 'Portuguese',
-      'ru': 'Russian',
-      'ar': 'Arabic'
-    };
-    return languageNames[code] || code;
-  }
-
-  /**
-   * Get native language name from language code
-   */
-  private getLanguageNativeName(code: string): string {
-    const nativeNames: Record<string, string> = {
-      'en': 'English',
-      'zh-CN': '中文(简体)',
-      'zh-TW': '中文(繁體)',
-      'ja': '日本語',
-      'ko': '한국어',
-      'es': 'Español',
-      'fr': 'Français',
-      'de': 'Deutsch',
-      'it': 'Italiano',
-      'pt': 'Português',
-      'ru': 'Русский',
-      'ar': 'العربية'
-    };
-    return nativeNames[code] || code;
   }
 }
