@@ -1,6 +1,7 @@
 import { MessageType, Message, MessageResponse } from '../../types/api.js';
 import { Settings, TranslationResult, Language, TranslationError, TranslationErrorType } from '../../types/interfaces.js';
 import { ERROR_MESSAGES, CONFIG } from '../../types/constants.js';
+import { I18nManager } from '../shared/i18n.js';
 
 /**
  * Popup Controller
@@ -32,8 +33,10 @@ class PopupController {
 
   private settings: Settings | null = null;
   private debouncedLanguageDetection: ((text: string) => void) | null = null;
+  private i18nManager: I18nManager;
 
   constructor() {
+    this.i18nManager = I18nManager.getInstance();
     this.elements = this.initializeElements();
     this.setupEventListeners();
     this.setupMessageListener();
@@ -145,6 +148,10 @@ class PopupController {
         
         // 验证设置是否成功
         console.log('Target language select value after setting:', this.elements.targetLanguage.value); // Debug log
+        
+        // 根据目标语言设置UI语言
+        this.i18nManager.setLanguage(this.settings.defaultTargetLanguage);
+        this.updateUITexts();
       }
 
       // 检查是否有选中的文本
@@ -206,7 +213,7 @@ class PopupController {
     this.hideError();
 
     if (!text) {
-      this.elements.detectedLanguage.textContent = '自动检测';
+      this.elements.detectedLanguage.textContent = this.i18nManager.getTexts().autoDetect;
       return;
     }
 
@@ -479,10 +486,64 @@ class PopupController {
       this.settings.defaultTargetLanguage = newLanguage;
       await this.sendMessage(MessageType.SAVE_SETTINGS, { settings: this.settings });
       
+      // 更新UI语言
+      this.i18nManager.setLanguage(newLanguage);
+      this.updateUITexts();
+      
       console.log('Target language preference saved successfully'); // Debug log
     } catch (error) {
       console.error('Failed to save language preference:', error);
     }
+  }
+
+  /**
+   * Update UI texts based on current language
+   */
+  private updateUITexts(): void {
+    const texts = this.i18nManager.getTexts();
+    
+    // Update title
+    const titleElement = document.getElementById('extensionTitle');
+    if (titleElement) titleElement.textContent = texts.extensionName;
+    
+    // Update detected language label
+    const detectedLabelElement = document.getElementById('detectedLabel');
+    if (detectedLabelElement) detectedLabelElement.textContent = texts.detectedLabel;
+    
+    // Update auto detect text
+    if (this.elements.detectedLanguage.textContent === '自动检测' || 
+        this.elements.detectedLanguage.textContent === 'Auto Detect' ||
+        this.elements.detectedLanguage.textContent === '自動檢測') {
+      this.elements.detectedLanguage.textContent = texts.autoDetect;
+    }
+    
+    // Update input placeholder
+    this.elements.inputText.placeholder = texts.inputPlaceholder;
+    
+    // Update translate to label
+    const translateToLabelElement = document.getElementById('translateToLabel');
+    if (translateToLabelElement) translateToLabelElement.textContent = texts.translateTo;
+    
+    // Update translate button
+    const translateBtnTextElement = document.getElementById('translateBtnText');
+    if (translateBtnTextElement) translateBtnTextElement.textContent = texts.translateButton;
+    
+    // Update translate page button
+    const translatePageTextElement = document.getElementById('translatePageText');
+    if (translatePageTextElement) translatePageTextElement.textContent = texts.translatePageButton;
+    
+    // Update result label
+    const resultLabelElement = document.getElementById('resultLabel');
+    if (resultLabelElement) resultLabelElement.textContent = texts.translationResult;
+    
+    // Update retry button
+    this.elements.retryBtn.textContent = texts.retry;
+    
+    // Update settings button title
+    this.elements.settingsBtn.title = texts.settings;
+    
+    // Update copy button title
+    this.elements.copyBtn.title = texts.copy;
   }
 
   /**
@@ -500,7 +561,8 @@ class PopupController {
       'de': 'Deutsch',
       'es': 'Español',
       'ru': 'Русский',
-      'auto': '自动检测'
+      'ar': 'العربية',
+      'auto': this.i18nManager.getTexts().autoDetect
     };
 
     this.elements.detectedLanguage.textContent = langNames[langCode] || langCode;
@@ -531,7 +593,7 @@ class PopupController {
     this.elements.translateBtn.classList.add('loading');
     this.elements.progressSection.classList.add('visible');
     this.elements.progressFill.style.width = '0%';
-    this.elements.progressText.textContent = '翻译中...';
+    this.elements.progressText.textContent = this.i18nManager.getTexts().translating;
 
     // 模拟进度（如果没有真实进度更新会被替换）
     let progress = 0;

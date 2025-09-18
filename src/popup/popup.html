@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1 class="title">翻译助手</h1>
+            <h1 class="title" id="extensionTitle">翻译助手</h1>
             <button class="settings-btn" id="settingsBtn" title="设置">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="4" y1="21" x2="4" y2="14"></line>
@@ -31,7 +31,7 @@
             <!-- 输入区域 -->
             <div class="input-section">
                 <div class="language-info">
-                    <span class="language-label">检测到:</span>
+                    <span class="language-label" id="detectedLabel">检测到:</span>
                     <span class="detected-language" id="detectedLanguage">自动检测</span>
                 </div>
                 <textarea class="input-text" id="inputText" placeholder="输入要翻译的文本..." rows="4"></textarea>
@@ -40,7 +40,7 @@
             <!-- 语言选择和翻译按钮 -->
             <div class="controls-section">
                 <div class="language-selector">
-                    <label for="targetLanguage" class="language-label">翻译到:</label>
+                    <label for="targetLanguage" class="language-label" id="translateToLabel">翻译到:</label>
                     <select class="language-select" id="targetLanguage">
                         <option value="en">English</option>
                         <option value="zh-CN">中文(简体)</option>
@@ -54,7 +54,7 @@
                     </select>
                 </div>
                 <button class="translate-btn" id="translateBtn">
-                    <span class="btn-text">翻译</span>
+                    <span class="btn-text" id="translateBtnText">翻译</span>
                     <div class="btn-loading" id="btnLoading">
                         <div class="spinner"></div>
                     </div>
@@ -72,7 +72,7 @@
             <!-- 结果区域 -->
             <div class="result-section" id="resultSection">
                 <div class="result-header">
-                    <span class="result-label">翻译结果:</span>
+                    <span class="result-label" id="resultLabel">翻译结果:</span>
                     <button class="copy-btn" id="copyBtn" title="复制">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -101,7 +101,7 @@
                     <line x1="16" y1="17" x2="8" y2="17"></line>
                     <polyline points="10,9 9,9 8,9"></polyline>
                 </svg>
-                <span>翻译整页</span>
+                <span id="translatePageText">翻译整页</span>
             </button>
         </div>
     </div>
