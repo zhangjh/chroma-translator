@@ -1,4 +1,5 @@
 import { Language, TranslationResult, TranslationStatus, TranslationErrorType } from '../../types/interfaces.js';
+import { MessageType } from '../../types/api.js';
 import { ErrorHandler } from '../shared/error-handler.js';
 import { CacheManager } from '../shared/cache-manager.js';
 
@@ -66,9 +67,11 @@ export class TranslationService {
     try {
       // Use Chrome's language detection API
       const detector = await LanguageDetector.create({
-        monitor(m) {
+        monitor: (m) => {
           m.addEventListener('downloadprogress', (e: any) => {
-            console.log(`Downloaded ${e.loaded * 100}%`);
+            const progress = Math.round(e.loaded * 100);
+            console.log(`Downloaded ${progress}%`);
+            this.notifyDownloadProgress('language_detector', progress);
           });
         },
       });
@@ -124,7 +127,14 @@ export class TranslationService {
       // Perform translation
       const translator = await Translator.create({
         sourceLanguage: detectedSourceLang,
-        targetLanguage: targetLang
+        targetLanguage: targetLang,
+        monitor: (m) => {
+          m.addEventListener('downloadprogress', (e: any) => {
+            const progress = Math.round(e.loaded * 100);
+            console.log(`Downloaded ${progress}%`);
+            this.notifyDownloadProgress('translator', progress);
+          });
+        },
       });
 
       const translatedText = await translator.translate(text);
@@ -147,6 +157,27 @@ export class TranslationService {
   }
 
 
+
+  /**
+   * Notify download progress to popup
+   */
+  private notifyDownloadProgress(modelType: string, progress: number): void {
+    try {
+      // Send progress update to all connected ports (popup)
+      chrome.runtime.sendMessage({
+        type: MessageType.MODEL_DOWNLOAD_PROGRESS,
+        data: {
+          modelType,
+          progress,
+          message: `正在下载${modelType === 'translator' ? '翻译' : '语言检测'}模型... ${progress}%`
+        }
+      }).catch(() => {
+        // Ignore errors if no popup is listening
+      });
+    } catch (error) {
+      // Ignore messaging errors
+    }
+  }
 
   /**
    * Get mock supported languages for fallback

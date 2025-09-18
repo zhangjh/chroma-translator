@@ -31,13 +31,12 @@ class PopupController {
   } | null = null;
 
   private settings: Settings | null = null;
-  private retryCount: number = 0;
-  private maxRetries: number = CONFIG.RETRY_ATTEMPTS;
   private debouncedLanguageDetection: ((text: string) => void) | null = null;
 
   constructor() {
     this.elements = this.initializeElements();
     this.setupEventListeners();
+    this.setupMessageListener();
     this.loadInitialData();
   }
 
@@ -62,6 +61,17 @@ class PopupController {
       settingsBtn: document.getElementById('settingsBtn') as HTMLButtonElement,
       translatePageBtn: document.getElementById('translatePageBtn') as HTMLButtonElement,
     };
+  }
+
+  /**
+   * Setup message listener for background script communications
+   */
+  private setupMessageListener(): void {
+    chrome.runtime.onMessage.addListener((message) => {
+      if (message.type === MessageType.MODEL_DOWNLOAD_PROGRESS) {
+        this.handleModelDownloadProgress(message.data);
+      }
+    });
   }
 
   /**
@@ -260,7 +270,6 @@ class PopupController {
 
     // 保存当前翻译请求
     this.currentTranslation = { text, targetLang };
-    this.retryCount = 0;
 
     await this.performTranslation();
   }
@@ -289,9 +298,6 @@ class PopupController {
       if (result.detectedLanguage) {
         this.updateDetectedLanguage(result.detectedLanguage);
       }
-
-      // 重置重试计数
-      this.retryCount = 0;
 
     } catch (error) {
       console.error('Translation failed:', error);
@@ -418,7 +424,6 @@ class PopupController {
     if (this.currentTranslation) {
       this.elements.inputText.value = this.currentTranslation.text;
       this.elements.targetLanguage.value = this.currentTranslation.targetLang;
-      this.retryCount = 0; // 重置重试计数
       this.performTranslation();
     }
   }
@@ -492,6 +497,23 @@ class PopupController {
   }
 
   /**
+   * Handle model download progress updates
+   */
+  private handleModelDownloadProgress(data: { modelType: string; progress: number; message: string }): void {
+    if (this.elements.progressSection.classList.contains('visible')) {
+      this.elements.progressFill.style.width = `${data.progress}%`;
+      this.elements.progressText.textContent = data.message;
+      
+      // 清除模拟进度动画，使用真实进度
+      const progressInterval = (this.elements.translateBtn as any).progressInterval;
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        delete (this.elements.translateBtn as any).progressInterval;
+      }
+    }
+  }
+
+  /**
    * Show loading state
    */
   private showLoading(): void {
@@ -501,7 +523,7 @@ class PopupController {
     this.elements.progressFill.style.width = '0%';
     this.elements.progressText.textContent = '翻译中...';
 
-    // 模拟进度
+    // 模拟进度（如果没有真实进度更新会被替换）
     let progress = 0;
     const progressInterval = setInterval(() => {
       progress += Math.random() * 20;

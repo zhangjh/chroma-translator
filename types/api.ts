@@ -74,7 +74,8 @@ export enum MessageType {
   TRANSLATE_SELECTED = 'translate_selected',
   TRANSLATE_FULL_PAGE = 'translate_full_page',
   RESTORE_ORIGINAL = 'restore_original',
-  UPDATE_PROGRESS = 'update_progress'
+  UPDATE_PROGRESS = 'update_progress',
+  MODEL_DOWNLOAD_PROGRESS = 'model_download_progress'
 }
 
 /**
