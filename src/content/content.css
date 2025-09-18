@@ -1761,3 +1761,412 @@ Full Page Translation Progress Overlay */
     background: rgba(26, 115, 232, 0.1);
   }
 }
+/* Trans
+lation Container Styles - for side-by-side original and translated text */
+.chrome-translation-container {
+  display: inline-block;
+  position: relative;
+  line-height: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.chrome-translation-original {
+  color: inherit;
+  opacity: 0.8;
+  font-weight: inherit;
+}
+
+.chrome-translation-separator {
+  color: #1a73e8;
+  font-weight: 600;
+  margin: 0 4px;
+  opacity: 0.7;
+}
+
+.chrome-translation-translated {
+  color: #1a73e8;
+  font-weight: 500;
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.08) 0%, rgba(66, 133, 244, 0.05) 100%);
+  padding: 2px 4px;
+  border-radius: 3px;
+  border-left: 2px solid rgba(26, 115, 232, 0.3);
+  margin-left: 2px;
+}
+
+/* Hover effects for translation containers */
+.chrome-translation-container:hover .chrome-translation-original {
+  opacity: 1;
+}
+
+.chrome-translation-container:hover .chrome-translation-translated {
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.12) 0%, rgba(66, 133, 244, 0.08) 100%);
+  border-left-color: rgba(26, 115, 232, 0.5);
+}
+
+.chrome-translation-container:hover .chrome-translation-separator {
+  opacity: 1;
+  color: #4285f4;
+}
+
+/* Animation for translation appearance */
+@keyframes chrome-translation-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.chrome-translation-translated {
+  animation: chrome-translation-fade-in 0.4s ease-out;
+}
+
+/* Dark mode support for translation containers */
+@media (prefers-color-scheme: dark) {
+  .chrome-translation-separator {
+    color: #8ab4f8;
+  }
+  
+  .chrome-translation-translated {
+    color: #aecbfa;
+    background: linear-gradient(135deg, rgba(138, 180, 248, 0.12) 0%, rgba(66, 133, 244, 0.08) 100%);
+    border-left-color: rgba(138, 180, 248, 0.4);
+  }
+  
+  .chrome-translation-container:hover .chrome-translation-translated {
+    background: linear-gradient(135deg, rgba(138, 180, 248, 0.18) 0%, rgba(66, 133, 244, 0.12) 100%);
+    border-left-color: rgba(138, 180, 248, 0.6);
+  }
+  
+  .chrome-translation-container:hover .chrome-translation-separator {
+    color: #aecbfa;
+  }
+}
+
+/* Responsive adjustments for translation containers */
+@media (max-width: 768px) {
+  .chrome-translation-container {
+    display: block;
+    margin: 2px 0;
+  }
+  
+  .chrome-translation-separator {
+    display: block;
+    margin: 4px 0;
+    text-align: center;
+    font-size: 12px;
+  }
+  
+  .chrome-translation-separator::before {
+    content: '↓ ';
+  }
+  
+  .chrome-translation-translated {
+    display: block;
+    margin: 4px 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border-left-width: 3px;
+  }
+}
+
+/* Special handling for different element types */
+h1 .chrome-translation-container,
+h2 .chrome-translation-container,
+h3 .chrome-translation-container,
+h4 .chrome-translation-container,
+h5 .chrome-translation-container,
+h6 .chrome-translation-container {
+  display: block;
+  margin: 8px 0;
+}
+
+h1 .chrome-translation-separator,
+h2 .chrome-translation-separator,
+h3 .chrome-translation-separator,
+h4 .chrome-translation-separator,
+h5 .chrome-translation-separator,
+h6 .chrome-translation-separator {
+  display: block;
+  margin: 6px 0;
+  text-align: left;
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+h1 .chrome-translation-translated,
+h2 .chrome-translation-translated,
+h3 .chrome-translation-translated,
+h4 .chrome-translation-translated,
+h5 .chrome-translation-translated,
+h6 .chrome-translation-translated {
+  display: block;
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left-width: 4px;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Button and link special styling */
+button .chrome-translation-container,
+a .chrome-translation-container {
+  display: inline-block;
+}
+
+button .chrome-translation-separator,
+a .chrome-translation-separator {
+  margin: 0 2px;
+  font-size: 0.9em;
+}
+
+button .chrome-translation-translated,
+a .chrome-translation-translated {
+  padding: 1px 3px;
+  border-radius: 2px;
+  border-left-width: 1px;
+  font-size: inherit;
+  background: rgba(26, 115, 232, 0.1);
+}
+
+/* List item special styling */
+li .chrome-translation-container {
+  display: inline-block;
+}
+
+/* Paragraph special styling */
+p .chrome-translation-container {
+  display: inline-block;
+}
+
+p .chrome-translation-translated {
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+/* Accessibility improvements */
+.chrome-translation-container:focus-within {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chrome-translation-container:focus-within {
+    outline-color: #8ab4f8;
+  }
+}
+
+/* Print styles - hide translations in print */
+@media print {
+  .chrome-translation-separator,
+  .chrome-translation-translated {
+    display: none !important;
+  }
+}/* Floa
+ting Progress Indicator Styles */
+.chrome-translation-floating-progress {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-width: 320px;
+  max-width: 400px;
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  cursor: move;
+}
+
+.chrome-translation-floating-progress.visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.chrome-translation-floating-content {
+  padding: 0;
+}
+
+.chrome-translation-floating-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 12px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  cursor: move;
+}
+
+.chrome-translation-floating-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.chrome-translation-floating-title {
+  font-weight: 600;
+  color: #1a73e8;
+  font-size: 14px;
+  flex: 1;
+}
+
+.chrome-translation-floating-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chrome-translation-floating-close:hover {
+  background-color: rgba(95, 99, 104, 0.1);
+  color: #202124;
+  transform: scale(1.1);
+}
+
+.chrome-translation-floating-progress {
+  padding: 16px 20px 20px 20px;
+}
+
+.chrome-translation-floating-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.chrome-translation-floating-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a73e8, #4285f4, #34a853);
+  background-size: 200% 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+  animation: chrome-translation-floating-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes chrome-translation-floating-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.chrome-translation-floating-text {
+  font-size: 13px;
+  color: #202124;
+  margin-bottom: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chrome-translation-floating-stats {
+  font-size: 12px;
+  color: #5f6368;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chrome-translation-floating-current {
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+.chrome-translation-floating-total {
+  font-weight: 600;
+  color: #5f6368;
+}
+
+/* Dark mode support for floating progress */
+@media (prefers-color-scheme: dark) {
+  .chrome-translation-floating-progress {
+    background: #1f1f1f;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .chrome-translation-floating-header {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .chrome-translation-floating-title {
+    color: #8ab4f8;
+  }
+  
+  .chrome-translation-floating-close {
+    color: #9aa0a6;
+  }
+  
+  .chrome-translation-floating-close:hover {
+    background-color: rgba(154, 160, 166, 0.1);
+    color: #e8eaed;
+  }
+  
+  .chrome-translation-floating-bar {
+    background-color: #404040;
+  }
+  
+  .chrome-translation-floating-text {
+    color: #e8eaed;
+  }
+  
+  .chrome-translation-floating-stats {
+    color: #9aa0a6;
+  }
+  
+  .chrome-translation-floating-current {
+    color: #8ab4f8;
+  }
+  
+  .chrome-translation-floating-total {
+    color: #9aa0a6;
+  }
+}
+
+/* Mobile responsive for floating progress */
+@media (max-width: 480px) {
+  .chrome-translation-floating-progress {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .chrome-translation-floating-header {
+    padding: 12px 16px 8px 16px;
+  }
+  
+  .chrome-translation-floating-progress {
+    padding: 12px 16px 16px 16px;
+  }
+  
+  .chrome-translation-floating-title {
+    font-size: 13px;
+  }
+  
+  .chrome-translation-floating-text {
+    font-size: 12px;
+  }
+}

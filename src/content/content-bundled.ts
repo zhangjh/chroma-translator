@@ -1593,35 +1593,35 @@ class ContentScript {
         case 'input':
           const input = element as HTMLInputElement;
           if (input.placeholder === originalText) {
-            input.placeholder = translatedText;
+            input.placeholder = `${originalText} | ${translatedText}`;
           } else if (input.value === originalText) {
-            input.value = translatedText;
+            input.value = `${originalText} | ${translatedText}`;
           } else if (input.title === originalText) {
-            input.title = translatedText;
+            input.title = `${originalText} | ${translatedText}`;
           }
           break;
 
         case 'textarea':
           const textarea = element as HTMLTextAreaElement;
           if (textarea.placeholder === originalText) {
-            textarea.placeholder = translatedText;
+            textarea.placeholder = `${originalText} | ${translatedText}`;
           } else if (textarea.value === originalText) {
-            textarea.value = translatedText;
+            textarea.value = `${originalText} | ${translatedText}`;
           }
           break;
 
         case 'img':
           const img = element as HTMLImageElement;
           if (img.alt === originalText) {
-            img.alt = translatedText;
+            img.alt = `${originalText} | ${translatedText}`;
           } else if (img.title === originalText) {
-            img.title = translatedText;
+            img.title = `${originalText} | ${translatedText}`;
           }
           break;
 
         default:
-          // For text content elements, replace the direct text content
-          this.replaceTextContent(element, originalText, translatedText);
+          // For text content elements, append translation after original text
+          this.appendTranslationToElement(element, originalText, translatedText);
           break;
       }
 
@@ -1636,45 +1636,82 @@ class ContentScript {
   }
 
   /**
-   * Replace text content in element while preserving structure
+   * Append translation to element while preserving original text
    */
-  private replaceTextContent(element: HTMLElement, originalText: string, translatedText: string): void {
-    // Find and replace text nodes that match the original text
-    const walker = document.createTreeWalker(
-      element,
-      NodeFilter.SHOW_TEXT,
-      null
-    );
+  private appendTranslationToElement(element: HTMLElement, originalText: string, translatedText: string): void {
+    try {
+      // Create a translation container to hold both original and translated text
+      const translationContainer = document.createElement('span');
+      translationContainer.className = 'chrome-translation-container';
+      
+      // Create original text span
+      const originalSpan = document.createElement('span');
+      originalSpan.className = 'chrome-translation-original';
+      originalSpan.textContent = originalText;
+      
+      // Create separator
+      const separator = document.createElement('span');
+      separator.className = 'chrome-translation-separator';
+      separator.textContent = ' | ';
+      
+      // Create translated text span
+      const translatedSpan = document.createElement('span');
+      translatedSpan.className = 'chrome-translation-translated';
+      translatedSpan.textContent = translatedText;
+      
+      // Assemble the container
+      translationContainer.appendChild(originalSpan);
+      translationContainer.appendChild(separator);
+      translationContainer.appendChild(translatedSpan);
+      
+      // Find and replace the original text content
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
 
-    const textNodes: Text[] = [];
-    let node;
-    while (node = walker.nextNode()) {
-      textNodes.push(node as Text);
-    }
-
-    // Replace text in matching nodes
-    let remainingOriginal = originalText;
-    let remainingTranslated = translatedText;
-
-    for (const textNode of textNodes) {
-      const nodeText = textNode.textContent || '';
-
-      if (remainingOriginal.includes(nodeText.trim()) && nodeText.trim()) {
-        // Calculate the portion of translation for this node
-        const ratio = nodeText.trim().length / originalText.length;
-        const translatedPortion = translatedText.substring(0, Math.ceil(translatedText.length * ratio));
-
-        textNode.textContent = translatedPortion;
-
-        // Update remaining text
-        remainingTranslated = remainingTranslated.substring(translatedPortion.length);
-        remainingOriginal = remainingOriginal.replace(nodeText.trim(), '');
+      const textNodes: Text[] = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node as Text);
       }
-    }
 
-    // If there's a single text node, replace it entirely
-    if (textNodes.length === 1 && textNodes[0].textContent?.trim() === originalText) {
-      textNodes[0].textContent = translatedText;
+      // For simple cases with single text node
+      if (textNodes.length === 1 && textNodes[0].textContent?.trim() === originalText) {
+        const parentNode = textNodes[0].parentNode;
+        if (parentNode) {
+          parentNode.replaceChild(translationContainer, textNodes[0]);
+        }
+        return;
+      }
+
+      // For more complex cases, try to find the best text node to replace
+      let bestMatch: Text | null = null;
+      let bestMatchScore = 0;
+
+      for (const textNode of textNodes) {
+        const nodeText = textNode.textContent?.trim() || '';
+        if (nodeText && originalText.includes(nodeText)) {
+          const score = nodeText.length / originalText.length;
+          if (score > bestMatchScore) {
+            bestMatch = textNode;
+            bestMatchScore = score;
+          }
+        }
+      }
+
+      if (bestMatch && bestMatch.parentNode) {
+        bestMatch.parentNode.replaceChild(translationContainer, bestMatch);
+      } else {
+        // Fallback: append to the element
+        element.appendChild(translationContainer);
+      }
+
+    } catch (error) {
+      console.error('Failed to append translation to element:', error);
+      // Fallback to simple text replacement
+      element.textContent = `${originalText} | ${translatedText}`;
     }
   }
 
@@ -1695,38 +1732,35 @@ class ContentScript {
           switch (element.tagName.toLowerCase()) {
             case 'input':
               const input = element as HTMLInputElement;
-              const translatedText = element.getAttribute('data-translated-text');
-              if (input.placeholder === translatedText) {
+              if (input.placeholder && input.placeholder.includes(' | ')) {
                 input.placeholder = originalText;
-              } else if (input.value === translatedText) {
+              } else if (input.value && input.value.includes(' | ')) {
                 input.value = originalText;
-              } else if (input.title === translatedText) {
+              } else if (input.title && input.title.includes(' | ')) {
                 input.title = originalText;
               }
               break;
 
             case 'textarea':
               const textarea = element as HTMLTextAreaElement;
-              const textareaTranslated = element.getAttribute('data-translated-text');
-              if (textarea.placeholder === textareaTranslated) {
+              if (textarea.placeholder && textarea.placeholder.includes(' | ')) {
                 textarea.placeholder = originalText;
-              } else if (textarea.value === textareaTranslated) {
+              } else if (textarea.value && textarea.value.includes(' | ')) {
                 textarea.value = originalText;
               }
               break;
 
             case 'img':
               const img = element as HTMLImageElement;
-              const imgTranslated = element.getAttribute('data-translated-text');
-              if (img.alt === imgTranslated) {
+              if (img.alt && img.alt.includes(' | ')) {
                 img.alt = originalText;
-              } else if (img.title === imgTranslated) {
+              } else if (img.title && img.title.includes(' | ')) {
                 img.title = originalText;
               }
               break;
 
             default:
-              // Restore text content
+              // Restore text content by removing translation containers
               this.restoreTextContent(element, originalText);
               break;
           }
@@ -1755,30 +1789,36 @@ class ContentScript {
    * Restore text content of element
    */
   private restoreTextContent(element: HTMLElement, originalText: string): void {
-    // Simple approach: if the element has only text content, replace it
-    const currentText = this.getDirectTextContent(element);
-    const translatedText = element.getAttribute('data-translated-text');
-
-    if (currentText === translatedText || element.textContent?.trim() === translatedText) {
-      // Find text nodes and restore
-      const walker = document.createTreeWalker(
-        element,
-        NodeFilter.SHOW_TEXT,
-        null
-      );
-
-      const textNodes: Text[] = [];
-      let node;
-      while (node = walker.nextNode()) {
-        textNodes.push(node as Text);
-      }
-
-      if (textNodes.length === 1) {
-        textNodes[0].textContent = originalText;
+    try {
+      // Look for translation containers and replace them with original text
+      const translationContainers = element.querySelectorAll('.chrome-translation-container');
+      
+      if (translationContainers.length > 0) {
+        // Replace each translation container with original text
+        translationContainers.forEach(container => {
+          const textNode = document.createTextNode(originalText);
+          if (container.parentNode) {
+            container.parentNode.replaceChild(textNode, container);
+          }
+        });
       } else {
-        // For complex structures, replace the entire text content
-        element.textContent = originalText;
+        // Fallback: check if the element contains the combined text pattern
+        const currentText = element.textContent?.trim() || '';
+        if (currentText.includes(' | ')) {
+          // Try to extract original text from the combined format
+          const parts = currentText.split(' | ');
+          if (parts.length >= 2 && parts[0].trim() === originalText) {
+            element.textContent = originalText;
+          }
+        } else if (currentText !== originalText) {
+          // If text doesn't match and no translation container found, restore original
+          element.textContent = originalText;
+        }
       }
+    } catch (error) {
+      console.error('Failed to restore text content:', error);
+      // Fallback: simply set the original text
+      element.textContent = originalText;
     }
   }
 
@@ -1832,9 +1872,9 @@ class ContentScript {
   }
 
   /**
-   * Hide progress overlay
+   * Hide floating progress indicator
    */
-  private hideProgressOverlay(): void {
+  private hideFloatingProgress(): void {
     if (this.progressOverlay) {
       this.progressOverlay.classList.remove('visible');
       setTimeout(() => {
@@ -1847,15 +1887,15 @@ class ContentScript {
   }
 
   /**
-   * Update progress display
+   * Update floating progress display
    */
-  private updateProgressDisplay(progress: TranslationProgress): void {
+  private updateFloatingProgress(progress: TranslationProgress): void {
     if (!this.progressOverlay) return;
 
-    const progressFill = this.progressOverlay.querySelector('.chrome-translation-progress-fill') as HTMLElement;
-    const progressText = this.progressOverlay.querySelector('.chrome-translation-progress-text') as HTMLElement;
-    const currentSpan = this.progressOverlay.querySelector('.chrome-translation-progress-current') as HTMLElement;
-    const totalSpan = this.progressOverlay.querySelector('.chrome-translation-progress-total') as HTMLElement;
+    const progressFill = this.progressOverlay.querySelector('.chrome-translation-floating-fill') as HTMLElement;
+    const progressText = this.progressOverlay.querySelector('.chrome-translation-floating-text') as HTMLElement;
+    const currentSpan = this.progressOverlay.querySelector('.chrome-translation-floating-current') as HTMLElement;
+    const totalSpan = this.progressOverlay.querySelector('.chrome-translation-floating-total') as HTMLElement;
 
     if (progressFill) {
       progressFill.style.width = `${progress.percentage}%`;
@@ -1879,7 +1919,7 @@ class ContentScript {
    */
   private cancelTranslation(): void {
     this.isTranslating = false;
-    this.hideProgressOverlay();
+    this.hideFloatingProgress();
     console.log('Translation cancelled by user');
   }
 
@@ -1887,7 +1927,7 @@ class ContentScript {
    * Show full page translation progress
    */
   public showFullPageProgress(progress: TranslationProgress): void {
-    this.updateProgressDisplay(progress);
+    this.updateFloatingProgress(progress);
   }
 
   /**
@@ -1973,48 +2013,7 @@ class ContentScript {
     }, 600);
   }
 
-  /**
-   * Update floating progress indicator
-   */
-  private updateFloatingProgress(progress: TranslationProgress): void {
-    if (!this.progressOverlay) return;
 
-    const progressFill = this.progressOverlay.querySelector('.chrome-translation-floating-fill') as HTMLElement;
-    const progressText = this.progressOverlay.querySelector('.chrome-translation-floating-text') as HTMLElement;
-    const currentSpan = this.progressOverlay.querySelector('.chrome-translation-floating-current') as HTMLElement;
-    const totalSpan = this.progressOverlay.querySelector('.chrome-translation-floating-total') as HTMLElement;
-
-    if (progressFill) {
-      progressFill.style.width = `${progress.percentage}%`;
-    }
-
-    if (progressText) {
-      progressText.textContent = progress.currentElement;
-    }
-
-    if (currentSpan) {
-      currentSpan.textContent = progress.translatedElements.toString();
-    }
-
-    if (totalSpan) {
-      totalSpan.textContent = progress.totalElements.toString();
-    }
-  }
-
-  /**
-   * Hide floating progress indicator
-   */
-  private hideFloatingProgress(): void {
-    if (this.progressOverlay) {
-      this.progressOverlay.classList.remove('visible');
-      setTimeout(() => {
-        if (this.progressOverlay && this.progressOverlay.parentNode) {
-          this.progressOverlay.parentNode.removeChild(this.progressOverlay);
-          this.progressOverlay = null;
-        }
-      }, 300);
-    }
-  }
 
   /**
    * Make floating progress draggable
