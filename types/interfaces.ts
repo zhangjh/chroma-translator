@@ -1,4 +1,4 @@
-// Core interfaces for Chrome Translation Extension
+// Core interfaces
 
 /**
  * Language model representing supported languages

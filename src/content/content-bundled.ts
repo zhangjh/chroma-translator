@@ -301,7 +301,6 @@ enum ElementPriority {
 }
 
 /**
- * Content Script for Chrome Translation Extension
  * Handles text selection detection and translation UI
  */
 class ContentScript {

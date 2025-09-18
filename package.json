@@ -1,7 +1,7 @@
 {
-    "name": "chrome-translation-extension",
+    "name": "chromatranslator",
     "version": "1.0.0",
-    "description": "A Chrome extension that provides translation functionality using Chrome's built-in translation API",
+    "description": "ChromaTranslator - A Chrome extension that provides colorful translation functionality using Chrome's built-in AI translation API",
     "scripts": {
         "build": "node build.js --release"
     },

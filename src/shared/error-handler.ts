@@ -1,4 +1,4 @@
-// Global error handling mechanism for Chrome Translation Extension
+// Global error handling mechanism
 
 import { TranslationError, TranslationErrorType } from '../../types/interfaces.js';
 import { ERROR_MESSAGES, CONFIG } from '../../types/constants.js';

@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Translation Extension",
+  "name": "ChromaTranslator-彩译",
   "version": "1.0.0",
-  "description": "快速翻译工具：支持输入框翻译、选中文本翻译和网页全文翻译，使用Chrome内置翻译API提供高质量翻译服务",
-  "author": "Chrome Translation Extension Team",
-  "homepage_url": "https://github.com/chrome-translation-extension",
+  "description": "ChromaTranslator - 多彩翻译工具：支持输入框翻译、选中文本翻译和网页全文翻译，使用Chrome内置AI提供高质量翻译服务",
+  "author": "zhangjh",
+  "homepage_url": "https://github.com/zhangjh/translator",
   "permissions": [
     "activeTab",
     "storage"
@@ -12,7 +12,7 @@
   "host_permissions": [],
   "action": {
     "default_popup": "dist/popup/popup.html",
-    "default_title": "Chrome Translation Extension - 快速翻译工具"
+    "default_title": "ChromaTranslator - 彩译"
   },
   "background": {
     "service_worker": "dist/src/background/background.js",

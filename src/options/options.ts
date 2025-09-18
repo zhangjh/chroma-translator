@@ -1,4 +1,4 @@
-// Options page functionality for Chrome Translation Extension
+// Options page functionality
 
 import { Settings } from '../../types/interfaces.js';
 import { SUPPORTED_LANGUAGES, DEFAULT_SETTINGS } from '../../types/constants.js';

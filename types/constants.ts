@@ -1,4 +1,4 @@
-// Constants and default values for Chrome Translation Extension
+// Constants and default values
 
 import { Settings, Language } from './interfaces';
 

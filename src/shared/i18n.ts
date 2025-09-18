@@ -1,4 +1,4 @@
-// Internationalization module for Chrome Translation Extension
+// Internationalization module
 
 /**
  * Interface for UI text translations

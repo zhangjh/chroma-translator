@@ -2,7 +2,7 @@ import { MessageRouter } from './message-router.js';
 import { PerformanceMonitor, CacheManager } from '../shared/index.js';
 
 /**
- * Chrome Translation Extension Background Script
+ * ChromaTranslator Background Script
  * Main entry point for background functionality
  */
 class BackgroundScript {
@@ -28,7 +28,7 @@ class BackgroundScript {
    * Initialize background script
    */
   private initialize(): void {
-    console.log('Chrome Translation Extension Background Script loaded');
+    console.log('ChromaTranslator Background Script loaded');
     
     // Handle extension installation
     chrome.runtime.onInstalled.addListener((details) => {

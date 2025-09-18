@@ -1,6 +1,6 @@
-# Chrome Translation Extension
+# ChromaTranslator - 彩译
 
-一个功能强大的Chrome翻译扩展，使用Chrome内置翻译API提供多种翻译方式，支持输入框翻译、选中文本翻译和网页全文翻译。
+一个功能强大的多彩翻译扩展，使用Chrome内置AI翻译API提供多种翻译方式，支持输入框翻译、选中文本翻译和网页全文翻译。
 
 ## 🌟 功能特性
 
@@ -47,7 +47,7 @@
 
 #### 方式一：从Chrome Web Store安装（推荐）
 1. 访问Chrome Web Store
-2. 搜索"Chrome Translation Extension"
+2. 搜索"ChromaTranslator"
 3. 点击"添加至Chrome"
 4. 确认安装权限
 
@@ -173,7 +173,7 @@ npm run clean
 
 ### 项目结构
 ```
-chrome-translation-extension/
+chromatranslator/
 ├── manifest.json              # 扩展清单文件
 ├── popup/                     # 弹窗界面
 │   ├── popup.html            # 弹窗HTML
@@ -214,74 +214,10 @@ chrome-translation-extension/
 └── build.js                   # 构建脚本
 ```
 
-### 开发流程
-1. **克隆项目**
-   ```bash
-   git clone <repository-url>
-   cd chrome-translation-extension
-   ```
-
-2. **安装依赖**
-   ```bash
-   npm install
-   ```
-
-3. **开发模式**
-   ```bash
-   npm run dev
-   ```
-
-4. **在Chrome中测试**
-   - 访问 `chrome://extensions/`
-   - 开启"开发者模式"
-   - 点击"加载已解压的扩展程序"
-   - 选择项目根目录
-
-5. **构建发布版本**
-   ```bash
-   npm run build-release
-   ```
-
-### 技术栈
-- **TypeScript** - 类型安全的JavaScript
-- **Chrome Extension Manifest V3** - 最新的扩展规范
-- **Chrome Translation API** - Chrome内置翻译服务
-- **Chrome Storage API** - 数据持久化
-- **CSS3** - 现代样式设计
-
-### 架构设计
-- **Background Script** - 核心翻译逻辑和API调用
-- **Content Script** - 网页内容交互和DOM操作
-- **Popup** - 用户界面和输入处理
-- **Options** - 设置页面和配置管理
-
-## 🤝 贡献指南
-
-### 报告问题
-- 使用GitHub Issues报告bug
-- 提供详细的复现步骤
-- 包含Chrome版本和操作系统信息
-
-### 功能建议
-- 在Issues中提出新功能建议
-- 描述使用场景和预期效果
-- 讨论实现方案
-
-### 代码贡献
-1. Fork项目
-2. 创建功能分支
-3. 提交代码变更
-4. 创建Pull Request
-
 ## 📄 许可证
 
 本项目采用MIT许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 🆘 支持与反馈
-
-- **问题反馈**：[GitHub Issues](https://github.com/chrome-translation-extension/issues)
-- **功能建议**：[GitHub Discussions](https://github.com/chrome-translation-extension/discussions)
-- **使用文档**：[Wiki](https://github.com/chrome-translation-extension/wiki)
 
 ## 🔄 版本历史
 
@@ -301,4 +237,4 @@ chrome-translation-extension/
 
 ---
 
-**Chrome Translation Extension** - 让翻译更简单、更高效！
+**ChromaTranslator** - 让翻译更简单、更高效、更多彩！

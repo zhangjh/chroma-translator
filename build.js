@@ -1,4 +1,4 @@
-// Build script for Chrome Translation Extension
+// Build script
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +11,7 @@ const pipelineAsync = promisify(pipeline);
 const isDevelopment = process.argv.includes('--dev');
 const isRelease = process.argv.includes('--release');
 
-console.log(`Building Chrome Translation Extension (${isDevelopment ? 'development' : isRelease ? 'release' : 'production'} mode)...`);
+console.log(`Building ChromaTranslator (${isDevelopment ? 'development' : isRelease ? 'release' : 'production'} mode)...`);
 
 async function copyFile(src, dest) {
   const destDir = path.dirname(dest);
@@ -61,7 +61,7 @@ async function build() {
       // Compile TypeScript directly to release/dist
       console.log('Compiling TypeScript to release/dist...');
       execSync(`npx tsc --outDir ${path.join(releaseDir, 'dist')}`, { stdio: 'inherit' });
-      
+
       // Compile content script separately without modules
       console.log('Compiling content script without modules...');
       execSync(`npx tsc --project tsconfig.content.json --outDir ${path.join(releaseDir, 'dist')}`, { stdio: 'inherit' });
@@ -205,7 +205,7 @@ async function build() {
       // Compile TypeScript
       console.log('Compiling TypeScript...');
       execSync('npx tsc', { stdio: 'inherit' });
-      
+
       // Compile content script separately without modules
       console.log('Compiling content script without modules...');
       execSync('npx tsc --project tsconfig.content.json', { stdio: 'inherit' });

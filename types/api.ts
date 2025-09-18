@@ -1,4 +1,4 @@
-// API interfaces for Chrome Translation Extension components
+// API interfaces
 
 import { 
   Language, 
