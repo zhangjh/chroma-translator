@@ -99,10 +99,6 @@ class BackgroundScript {
       enableFullPageTranslation: true,
       enableStreamingTranslation: true,
       translationDelay: 300,
-      shortcuts: {
-        translateSelected: 'Ctrl+Shift+T',
-        translateFullPage: 'Ctrl+Shift+F'
-      }
     };
 
     chrome.storage.sync.set(defaultSettings, () => {

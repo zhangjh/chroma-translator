@@ -61,6 +61,10 @@ async function build() {
       // Compile TypeScript directly to release/dist
       console.log('Compiling TypeScript to release/dist...');
       execSync(`npx tsc --outDir ${path.join(releaseDir, 'dist')}`, { stdio: 'inherit' });
+      
+      // Compile content script separately without modules
+      console.log('Compiling content script without modules...');
+      execSync(`npx tsc --project tsconfig.content.json --outDir ${path.join(releaseDir, 'dist')}`, { stdio: 'inherit' });
 
       // Copy static files directly to dist directory
       const staticFiles = [
@@ -201,6 +205,10 @@ async function build() {
       // Compile TypeScript
       console.log('Compiling TypeScript...');
       execSync('npx tsc', { stdio: 'inherit' });
+      
+      // Compile content script separately without modules
+      console.log('Compiling content script without modules...');
+      execSync('npx tsc --project tsconfig.content.json', { stdio: 'inherit' });
     }
 
     console.log('Build completed successfully!');

@@ -24,7 +24,7 @@
         "<all_urls>"
       ],
       "js": [
-        "dist/src/content/content.js"
+        "dist/src/content/content-bundled.js"
       ],
       "css": [
         "src/content/content.css"

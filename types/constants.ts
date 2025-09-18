@@ -12,10 +12,6 @@ export const DEFAULT_SETTINGS: Settings = {
   enableFullPageTranslation: true,
   enableStreamingTranslation: true,
   translationDelay: 500, // 500ms debounce delay
-  shortcuts: {
-    translateSelected: 'Alt+Shift+T',
-    translateFullPage: 'Alt+Shift+F'
-  }
 };
 
 /**

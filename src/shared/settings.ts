@@ -119,10 +119,6 @@ export class SettingsManager {
       enableFullPageTranslation: storedSettings.enableFullPageTranslation ?? DEFAULT_SETTINGS.enableFullPageTranslation,
       enableStreamingTranslation: storedSettings.enableStreamingTranslation ?? DEFAULT_SETTINGS.enableStreamingTranslation,
       translationDelay: storedSettings.translationDelay || DEFAULT_SETTINGS.translationDelay,
-      shortcuts: {
-        translateSelected: storedSettings.shortcuts?.translateSelected || DEFAULT_SETTINGS.shortcuts.translateSelected,
-        translateFullPage: storedSettings.shortcuts?.translateFullPage || DEFAULT_SETTINGS.shortcuts.translateFullPage
-      }
     };
   }
 
@@ -146,14 +142,6 @@ export class SettingsManager {
     // Validate translationDelay
     if (typeof validated.translationDelay !== 'number' || validated.translationDelay < 0) {
       validated.translationDelay = DEFAULT_SETTINGS.translationDelay;
-    }
-
-    // Validate shortcuts
-    if (!validated.shortcuts || typeof validated.shortcuts !== 'object') {
-      validated.shortcuts = { ...DEFAULT_SETTINGS.shortcuts };
-    } else {
-      validated.shortcuts.translateSelected = validated.shortcuts.translateSelected || DEFAULT_SETTINGS.shortcuts.translateSelected;
-      validated.shortcuts.translateFullPage = validated.shortcuts.translateFullPage || DEFAULT_SETTINGS.shortcuts.translateFullPage;
     }
 
     return validated;

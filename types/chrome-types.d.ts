@@ -97,8 +97,4 @@ export interface Settings {
   enableFullPageTranslation: boolean;
   enableStreamingTranslation: boolean;
   translationDelay: number;
-  shortcuts: {
-    translateSelected: string;
-    translateFullPage: string;
-  };
 }

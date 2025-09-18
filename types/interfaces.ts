@@ -19,10 +19,6 @@ export interface Settings {
   enableFullPageTranslation: boolean;
   enableStreamingTranslation: boolean;
   translationDelay: number; // 防抖延迟时间(ms)
-  shortcuts: {
-    translateSelected: string;
-    translateFullPage: string;
-  };
 }
 
 /**
@@ -97,12 +93,4 @@ export interface TranslationError {
   type: TranslationErrorType;
   message: string;
   retryable: boolean;
-}
-
-/**
- * Shortcut settings for keyboard shortcuts
- */
-export interface ShortcutSettings {
-  translateSelected: string;
-  translateFullPage: string;
 }

@@ -6,7 +6,6 @@ import {
   TranslationResult, 
   TranslationProgress, 
   BatchTranslationProgress,
-  ShortcutSettings 
 } from './interfaces';
 
 /**
@@ -58,7 +57,6 @@ export interface OptionsAPI {
   getAvailableLanguages(): Promise<Language[]>;
   saveDefaultLanguage(langCode: string): Promise<void>;
   getDefaultLanguage(): Promise<string>;
-  saveShortcutSettings(shortcuts: ShortcutSettings): Promise<void>;
 }
 
 /**

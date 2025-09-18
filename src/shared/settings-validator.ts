@@ -21,7 +21,6 @@ export class SettingsValidator {
       enableFullPageTranslation: this.validateBoolean(settings.enableFullPageTranslation, DEFAULT_SETTINGS.enableFullPageTranslation),
       enableStreamingTranslation: this.validateBoolean(settings.enableStreamingTranslation, DEFAULT_SETTINGS.enableStreamingTranslation),
       translationDelay: this.validateDelay(settings.translationDelay),
-      shortcuts: this.validateShortcuts(settings.shortcuts)
     };
   }
 
@@ -55,39 +54,6 @@ export class SettingsValidator {
   }
 
   /**
-   * Validate shortcuts configuration
-   */
-  public static validateShortcuts(shortcuts: any): Settings['shortcuts'] {
-    if (!shortcuts || typeof shortcuts !== 'object') {
-      return { ...DEFAULT_SETTINGS.shortcuts };
-    }
-
-    return {
-      translateSelected: this.validateShortcut(shortcuts.translateSelected, DEFAULT_SETTINGS.shortcuts.translateSelected),
-      translateFullPage: this.validateShortcut(shortcuts.translateFullPage, DEFAULT_SETTINGS.shortcuts.translateFullPage)
-    };
-  }
-
-  /**
-   * Validate individual shortcut string
-   */
-  public static validateShortcut(shortcut: any, defaultShortcut: string): string {
-    if (typeof shortcut !== 'string' || !this.isValidShortcut(shortcut)) {
-      return defaultShortcut;
-    }
-    return shortcut;
-  }
-
-  /**
-   * Check if shortcut string is valid
-   */
-  public static isValidShortcut(shortcut: string): boolean {
-    // Basic validation for keyboard shortcuts
-    const shortcutPattern = /^(Ctrl|Alt|Shift|Meta)(\+(Ctrl|Alt|Shift|Meta))*\+[A-Z0-9]$/i;
-    return shortcutPattern.test(shortcut);
-  }
-
-  /**
    * Validate partial settings update
    */
   public static validatePartialSettings(partialSettings: Partial<Settings>): Partial<Settings> {
@@ -115,10 +81,6 @@ export class SettingsValidator {
 
     if (partialSettings.translationDelay !== undefined) {
       validated.translationDelay = this.validateDelay(partialSettings.translationDelay);
-    }
-
-    if (partialSettings.shortcuts !== undefined) {
-      validated.shortcuts = this.validateShortcuts(partialSettings.shortcuts);
     }
 
     return validated;
