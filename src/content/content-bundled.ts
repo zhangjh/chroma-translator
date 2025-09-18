@@ -137,8 +137,9 @@ enum ElementPriority {
  */
 class ContentScript {
   private selectedText: string = '';
-  private selectionPosition: { x: number; y: number } = { x: 0, y: 0 };
+  private selectionPosition: { x: number; y: number; width?: number; height?: number } = { x: 0, y: 0 };
   private tooltip: HTMLElement | null = null;
+  private repositionTimeout: number | null = null;
 
   constructor() {
     this.init();
@@ -256,8 +257,14 @@ class ContentScript {
       return;
     }
     
-    // Update selection position
-    this.selectionPosition = { x, y };
+    // Get the actual selection bounds instead of just mouse position
+    const selectionBounds = this.getSelectionBounds(selection);
+    if (selectionBounds) {
+      this.selectionPosition = selectionBounds;
+    } else {
+      // Fallback to mouse position
+      this.selectionPosition = { x, y };
+    }
        
     console.log('text selection detected:', {
       text: this.selectedText,
@@ -271,9 +278,57 @@ class ContentScript {
   }
 
   /**
+   * Get the bounds of the current text selection
+   */
+  private getSelectionBounds(selection: Selection | null): { x: number; y: number; width: number; height: number } | null {
+    if (!selection || selection.rangeCount === 0) {
+      return null;
+    }
+
+    try {
+      const range = selection.getRangeAt(0);
+      const rects = range.getClientRects();
+      
+      if (rects.length === 0) {
+        // Fallback to range bounding rect
+        const rect = range.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) {
+          return null;
+        }
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height
+        };
+      }
+
+      // For multi-line selections, use the first line for positioning
+      const firstRect = rects[0];
+      const lastRect = rects[rects.length - 1];
+      
+      // Calculate the overall bounds
+      const left = Math.min(firstRect.left, lastRect.left);
+      const right = Math.max(firstRect.right, lastRect.right);
+      const top = firstRect.top;
+      const bottom = lastRect.bottom;
+      
+      return {
+        x: left + (right - left) / 2, // Center horizontally
+        y: top, // Use top of first line
+        width: right - left,
+        height: bottom - top
+      };
+    } catch (error) {
+      console.warn('Failed to get selection bounds:', error);
+      return null;
+    }
+  }
+
+  /**
    * Show translation tooltip at specified position
    */
-  public showTranslationTooltip(text: string, position: { x: number; y: number }): void {
+  public showTranslationTooltip(text: string, position: { x: number; y: number; width?: number; height?: number }): void {
     // Hide existing tooltip if visible
     this.hideTooltip();
 
@@ -309,7 +364,7 @@ class ContentScript {
     tooltip.innerHTML = `
       <div class="chrome-translate-tooltip-header">
         <span class="chrome-translate-tooltip-title">翻译</span>
-        <button class="chrome-translate-tooltip-close" title="关闭">×</button>
+        <button class="chrome-translate-tooltip-close" title="关闭" aria-label="关闭翻译弹框">×</button>
       </div>
       <div class="chrome-translate-tooltip-content">
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(text)}</div>
@@ -332,13 +387,18 @@ class ContentScript {
     // Prevent tooltip from closing when clicking inside it
     tooltip.addEventListener('click', (e) => e.stopPropagation());
 
+    // Setup initial scroll detection
+    setTimeout(() => {
+      this.setupScrollDetection();
+    }, 50);
+
     return tooltip;
   }
 
   /**
-   * Position tooltip relative to selection
+   * Position tooltip relative to selection with smart positioning
    */
-  private positionTooltip(position: { x: number; y: number }): void {
+  private positionTooltip(position: { x: number; y: number; width?: number; height?: number }): void {
     if (!this.tooltip) return;
 
     const tooltip = this.tooltip;
@@ -347,46 +407,130 @@ class ContentScript {
     const scrollX = window.pageXOffset;
     const scrollY = window.pageYOffset;
 
-    // Get tooltip dimensions (approximate)
-    const tooltipWidth = 250; // Approximate width
-    const tooltipHeight = 120; // Approximate height
-    const offset = 10; // Offset from selection
+    // Force a layout to get accurate dimensions
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.display = 'block';
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const tooltipWidth = tooltipRect.width || 320;
+    const tooltipHeight = tooltipRect.height || 180;
+    tooltip.style.visibility = '';
+    tooltip.style.display = '';
 
-    let left = position.x - tooltipWidth / 2;
-    let top = position.y - tooltipHeight - offset;
+    const selectionWidth = position.width || 0;
+    const selectionHeight = position.height || 20;
+    const offset = 16; // Offset from selection
+    const margin = 20; // Margin from viewport edges
 
-    // Adjust horizontal position if tooltip goes outside viewport
-    if (left < scrollX + 10) {
-      left = scrollX + 10;
-    } else if (left + tooltipWidth > scrollX + viewportWidth - 10) {
-      left = scrollX + viewportWidth - tooltipWidth - 10;
+    // Calculate available space in all directions
+    const spaceAbove = position.y - scrollY;
+    const spaceBelow = scrollY + viewportHeight - (position.y + selectionHeight);
+    const spaceLeft = position.x - scrollX;
+    const spaceRight = scrollX + viewportWidth - position.x;
+
+    let left: number = position.x - tooltipWidth / 2; // Initialize with default value
+    let top: number;
+    let placement = 'above'; // 'above', 'below', 'left', 'right'
+
+    // Determine the best placement based on available space
+    const needsHeight = tooltipHeight + offset + margin;
+    const needsWidth = tooltipWidth + margin * 2;
+
+    if (spaceBelow >= needsHeight) {
+      // Prefer below if there's enough space
+      placement = 'below';
+      top = position.y + selectionHeight + offset;
+    } else if (spaceAbove >= needsHeight) {
+      // Use above if there's enough space
+      placement = 'above';
+      top = position.y - tooltipHeight - offset;
+    } else if (spaceRight >= needsWidth && spaceRight > spaceLeft) {
+      // Try right side
+      placement = 'right';
+      left = position.x + selectionWidth / 2 + offset;
+      top = position.y + selectionHeight / 2 - tooltipHeight / 2;
+    } else if (spaceLeft >= needsWidth) {
+      // Try left side
+      placement = 'left';
+      left = position.x - selectionWidth / 2 - tooltipWidth - offset;
+      top = position.y + selectionHeight / 2 - tooltipHeight / 2;
+    } else {
+      // Fallback: use the side with more space, but constrain to viewport
+      if (spaceBelow > spaceAbove) {
+        placement = 'below';
+        top = Math.min(position.y + selectionHeight + offset, scrollY + viewportHeight - tooltipHeight - margin);
+      } else {
+        placement = 'above';
+        top = Math.max(position.y - tooltipHeight - offset, scrollY + margin);
+      }
     }
 
-    // Adjust vertical position if tooltip goes outside viewport
-    if (top < scrollY + 10) {
-      // Show below selection instead
-      top = position.y + offset;
-      // Add class to flip arrow
-      tooltip.classList.add('below-selection');
+    // Calculate horizontal position for above/below placements
+    if (placement === 'above' || placement === 'below') {
+      left = position.x - tooltipWidth / 2;
+      
+      // Adjust horizontal position if tooltip goes outside viewport
+      if (left < scrollX + margin) {
+        left = scrollX + margin;
+      } else if (left + tooltipWidth > scrollX + viewportWidth - margin) {
+        left = scrollX + viewportWidth - tooltipWidth - margin;
+      }
     }
 
-    // Ensure tooltip doesn't go below viewport
-    if (top + tooltipHeight > scrollY + viewportHeight - 10) {
-      top = scrollY + viewportHeight - tooltipHeight - 10;
+    // Ensure vertical position is within viewport for side placements
+    if (placement === 'left' || placement === 'right') {
+      if (top < scrollY + margin) {
+        top = scrollY + margin;
+      } else if (top + tooltipHeight > scrollY + viewportHeight - margin) {
+        top = scrollY + viewportHeight - tooltipHeight - margin;
+      }
     }
 
-    tooltip.style.left = `${left}px`;
-    tooltip.style.top = `${top}px`;
+    // Apply positioning
+    tooltip.style.left = `${Math.round(left)}px`;
+    tooltip.style.top = `${Math.round(top)}px`;
+
+    // Update tooltip classes based on placement
+    tooltip.classList.remove('below-selection', 'above-selection', 'left-selection', 'right-selection');
+    tooltip.classList.add(`${placement}-selection`);
+
+    // Calculate arrow position for above/below placements
+    if (placement === 'above' || placement === 'below') {
+      const arrowLeft = Math.max(20, Math.min(tooltipWidth - 20, position.x - left));
+      tooltip.style.setProperty('--arrow-offset', `${arrowLeft}px`);
+    } else {
+      // For side placements, center the arrow vertically
+      const arrowTop = Math.max(20, Math.min(tooltipHeight - 20, (position.y + selectionHeight / 2) - top));
+      tooltip.style.setProperty('--arrow-offset', `${arrowTop}px`);
+    }
+
+    console.log('Tooltip positioned:', {
+      placement,
+      left: Math.round(left),
+      top: Math.round(top),
+      spaceAbove,
+      spaceBelow,
+      spaceLeft,
+      spaceRight,
+      tooltipSize: { width: tooltipWidth, height: tooltipHeight }
+    });
   }
 
   /**
-   * Hide tooltip
+   * Hide tooltip with animation
    */
   private hideTooltip(): void {
-    // remove all tooltip elements
     if (this.tooltip && this.tooltip.parentNode) {
-        this.tooltip.parentNode.removeChild(this.tooltip);
-        this.tooltip = null;
+      // Add fade-out animation
+      this.tooltip.style.opacity = '0';
+      this.tooltip.style.transform = 'translateY(-8px) scale(0.95)';
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        if (this.tooltip && this.tooltip.parentNode) {
+          this.tooltip.parentNode.removeChild(this.tooltip);
+          this.tooltip = null;
+        }
+      }, 250);
     }
   }
 
@@ -423,12 +567,16 @@ class ContentScript {
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
         <div class="chrome-translate-tooltip-result">${this.escapeHtml(translatedText)}</div>
       `;
+
+      // Add scroll detection for visual feedback
+      setTimeout(() => {
+        this.setupScrollDetection();
+      }, 50);
     }
 
     if (actions) {
       actions.innerHTML = `
-        <button class="chrome-translate-tooltip-button secondary">复制</button>
-        <button class="chrome-translate-tooltip-button">重新翻译</button>
+        <button class="chrome-translate-tooltip-button secondary" title="复制翻译结果">复制</button>
       `;
 
       // Add event listeners for action buttons
@@ -437,14 +585,25 @@ class ContentScript {
       if (copyButton) {
         copyButton.addEventListener('click', () => {
           navigator.clipboard.writeText(translatedText).then(() => {
-            (copyButton as HTMLElement).textContent = '已复制';
+            const originalText = (copyButton as HTMLElement).textContent;
+            (copyButton as HTMLElement).textContent = '已复制 ✓';
+            (copyButton as HTMLElement).style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+            setTimeout(() => {
+              (copyButton as HTMLElement).textContent = originalText;
+              (copyButton as HTMLElement).style.background = '';
+            }, 1500);
+          }).catch(() => {
+            (copyButton as HTMLElement).textContent = '复制失败';
             setTimeout(() => {
               (copyButton as HTMLElement).textContent = '复制';
-            }, 1000);
+            }, 1500);
           });
         });
       }
     }
+
+    // Re-position tooltip after content update since height may have changed
+    this.scheduleRepositioning();
   }
 
   /**
@@ -461,14 +620,17 @@ class ContentScript {
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
         <div class="chrome-translate-tooltip-error">${this.escapeHtml(errorMessage)}</div>
       `;
+
+      // Add scroll detection for visual feedback
+      setTimeout(() => {
+        this.setupScrollDetection();
+      }, 50);
     }
 
     if (actions) {
-      let actionsHTML = '';
-      
-      actionsHTML += `<button class="chrome-translate-tooltip-button close-button">关闭</button>`;
-      
-      actions.innerHTML = actionsHTML;
+      actions.innerHTML = `
+        <button class="chrome-translate-tooltip-button close-button" title="关闭">关闭</button>
+      `;
 
       // Add close button event listener
       const closeButton = actions.querySelector('.close-button');
@@ -481,6 +643,9 @@ class ContentScript {
 
     // Add error styling
     this.tooltip.classList.add(CSS_CLASSES.ERROR_STATE);
+
+    // Re-position tooltip after content update
+    this.scheduleRepositioning();
   }
 
   /**
@@ -602,6 +767,70 @@ class ContentScript {
    */
   private generateRequestId(): string {
     return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  /**
+   * Schedule tooltip repositioning with debouncing
+   */
+  private scheduleRepositioning(): void {
+    if (this.repositionTimeout) {
+      clearTimeout(this.repositionTimeout);
+    }
+    
+    this.repositionTimeout = window.setTimeout(() => {
+      if (this.tooltip) {
+        this.positionTooltip(this.selectionPosition);
+      }
+      this.repositionTimeout = null;
+    }, 50);
+  }
+
+  /**
+   * Setup scroll detection for content areas
+   */
+  private setupScrollDetection(): void {
+    if (!this.tooltip) return;
+
+    const originalElement = this.tooltip.querySelector('.chrome-translate-tooltip-original') as HTMLElement;
+    const resultElement = this.tooltip.querySelector('.chrome-translate-tooltip-result') as HTMLElement;
+    const errorElement = this.tooltip.querySelector('.chrome-translate-tooltip-error') as HTMLElement;
+
+    // Check and setup scroll detection for each element
+    [originalElement, resultElement, errorElement].forEach(element => {
+      if (element) {
+        this.checkScrollable(element);
+        
+        // Add scroll event listener to update fade effect
+        element.addEventListener('scroll', () => {
+          this.updateScrollFade(element);
+        });
+      }
+    });
+  }
+
+  /**
+   * Check if element is scrollable and add appropriate class
+   */
+  private checkScrollable(element: HTMLElement): void {
+    if (element.scrollHeight > element.clientHeight) {
+      element.classList.add('has-scroll');
+      this.updateScrollFade(element);
+    } else {
+      element.classList.remove('has-scroll');
+    }
+  }
+
+  /**
+   * Update scroll fade effect based on scroll position
+   */
+  private updateScrollFade(element: HTMLElement): void {
+    const isScrolledToBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 2;
+    
+    if (isScrolledToBottom) {
+      element.classList.remove('has-scroll');
+    } else {
+      element.classList.add('has-scroll');
+    }
   }
 
   /**

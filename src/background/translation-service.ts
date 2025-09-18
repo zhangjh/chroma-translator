@@ -2,6 +2,7 @@ import { Language, TranslationResult, TranslationStatus, TranslationErrorType } 
 import { MessageType } from '../../types/api.js';
 import { ErrorHandler } from '../shared/error-handler.js';
 import { CacheManager } from '../shared/cache-manager.js';
+import { SettingsManager } from '../shared/settings.js';
 
 /**
  * Chrome Translation Service
@@ -12,10 +13,12 @@ export class TranslationService {
   private isApiAvailable: boolean | null = null;
   private errorHandler: ErrorHandler;
   private cacheManager: CacheManager;
+  private settingsManager: SettingsManager;
 
   private constructor() {
     this.errorHandler = ErrorHandler.getInstance();
     this.cacheManager = CacheManager.getInstance();
+    this.settingsManager = SettingsManager.getInstance();
   }
 
   /**
@@ -97,7 +100,7 @@ export class TranslationService {
   public async translate(
     text: string,
     sourceLang: string,
-    targetLang: string
+    targetLang?: string
   ): Promise<TranslationResult> {
     // Validate text length
     const validationError = this.errorHandler.validateTextLength(text);
@@ -105,8 +108,11 @@ export class TranslationService {
       throw validationError;
     }
 
+    // Use default target language if not provided
+    const finalTargetLang = targetLang || await this.settingsManager.getDefaultTargetLanguage();
+
     // Check cache first
-    const cachedResult = await this.cacheManager.get(text, sourceLang, targetLang);
+    const cachedResult = await this.cacheManager.get(text, sourceLang, finalTargetLang);
     if (cachedResult) {
       console.log('Translation cache hit');
       return cachedResult;
@@ -127,7 +133,7 @@ export class TranslationService {
       // Perform translation
       const translator = await Translator.create({
         sourceLanguage: detectedSourceLang,
-        targetLanguage: targetLang,
+        targetLanguage: finalTargetLang,
         monitor: (m) => {
           m.addEventListener('downloadprogress', (e: any) => {
             const progress = Math.round(e.loaded * 100);
@@ -147,7 +153,7 @@ export class TranslationService {
       };
 
       // Cache the result
-      await this.cacheManager.set(text, sourceLang, targetLang, result);
+      await this.cacheManager.set(text, sourceLang, finalTargetLang, result);
 
       return result;
     } catch (error) {
