@@ -119,22 +119,22 @@ class PopupController {
     try {
       // 加载设置
       this.settings = await this.sendMessage(MessageType.GET_SETTINGS);
-      
+
       // 初始化防抖函数
       this.initializeDebouncedFunctions();
-      
+
       // 加载支持的语言列表
       const languages = await this.sendMessage(MessageType.GET_SUPPORTED_LANGUAGES);
       this.populateLanguageOptions(languages);
-      
+
       // 设置默认目标语言
       if (this.settings) {
         this.elements.targetLanguage.value = this.settings.defaultTargetLanguage;
       }
-      
+
       // 检查是否有选中的文本
       await this.checkSelectedText();
-      
+
     } catch (error) {
       console.error('Failed to load initial data:', error);
       this.showError('初始化失败，请刷新重试');
@@ -147,7 +147,7 @@ class PopupController {
   private populateLanguageOptions(languages: Language[]): void {
     // 清空现有选项
     this.elements.targetLanguage.innerHTML = '';
-    
+
     // 添加语言选项
     languages.forEach(lang => {
       const option = document.createElement('option');
@@ -231,12 +231,12 @@ class PopupController {
     delay: number
   ): (...args: Parameters<T>) => void {
     let timeoutId: number | null = null;
-    
+
     return (...args: Parameters<T>) => {
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
       }
-      
+
       timeoutId = window.setTimeout(() => {
         func.apply(null, args);
         timeoutId = null;
@@ -285,7 +285,7 @@ class PopupController {
       });
 
       this.showResult(result.translatedText);
-      
+
       if (result.detectedLanguage) {
         this.updateDetectedLanguage(result.detectedLanguage);
       }
@@ -306,26 +306,12 @@ class PopupController {
    */
   private async handleTranslationError(error: any): Promise<void> {
     const translationError = this.parseError(error);
-    
-    // 检查是否可以重试
-    if (translationError.retryable && this.retryCount < this.maxRetries) {
-      this.retryCount++;
-      
-      // 计算重试延迟（指数退避）
-      const delay = CONFIG.RETRY_DELAY * Math.pow(2, this.retryCount - 1);
-      
-      this.showError(`${translationError.message} (${this.retryCount}/${this.maxRetries} 重试中...)`);
-      
-      // 延迟后重试
-      setTimeout(() => {
-        this.performTranslation();
-      }, delay);
-      
+
+    // 如果是API不可用错误，直接显示错误，不进行重试
+    if (translationError.type === TranslationErrorType.API_UNAVAILABLE) {
+      this.showError(translationError.message, false);
       return;
     }
-
-    // 显示最终错误
-    this.showError(translationError.message, translationError.retryable);
   }
 
   /**
@@ -406,7 +392,7 @@ class PopupController {
 
     try {
       await navigator.clipboard.writeText(resultText);
-      
+
       // 显示复制成功提示
       const originalText = this.elements.copyBtn.innerHTML;
       this.elements.copyBtn.innerHTML = `
@@ -414,11 +400,11 @@ class PopupController {
           <polyline points="20,6 9,17 4,12"></polyline>
         </svg>
       `;
-      
+
       setTimeout(() => {
         this.elements.copyBtn.innerHTML = originalText;
       }, 1000);
-      
+
     } catch (error) {
       console.error('Copy failed:', error);
       this.showError('复制失败');
@@ -446,7 +432,7 @@ class PopupController {
       if (!tab.id) return;
 
       const targetLang = this.elements.targetLanguage.value;
-      
+
       // 发送全文翻译消息到content script
       await chrome.tabs.sendMessage(tab.id, {
         type: MessageType.TRANSLATE_FULL_PAGE,
@@ -514,7 +500,7 @@ class PopupController {
     this.elements.progressSection.classList.add('visible');
     this.elements.progressFill.style.width = '0%';
     this.elements.progressText.textContent = '翻译中...';
-    
+
     // 模拟进度
     let progress = 0;
     const progressInterval = setInterval(() => {
@@ -534,7 +520,7 @@ class PopupController {
     this.elements.translateBtn.disabled = false;
     this.elements.translateBtn.classList.remove('loading');
     this.elements.progressSection.classList.remove('visible');
-    
+
     // 清除进度动画
     const progressInterval = (this.elements.translateBtn as any).progressInterval;
     if (progressInterval) {
@@ -564,7 +550,7 @@ class PopupController {
   private showError(message: string, showRetry: boolean = false): void {
     this.elements.errorMessage.textContent = message;
     this.elements.errorSection.classList.add('visible');
-    
+
     // 显示或隐藏重试按钮
     if (showRetry && this.currentTranslation) {
       this.elements.retryBtn.style.display = 'inline-block';

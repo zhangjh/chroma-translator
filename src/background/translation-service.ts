@@ -63,9 +63,8 @@ export class TranslationService {
       throw this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE);
     }
 
-    const detectWithRetry = async (): Promise<string> => {
+    try {
       // Use Chrome's language detection API
-
       const detector = await LanguageDetector.create({
         monitor(m) {
           m.addEventListener('downloadprogress', (e: any) => {
@@ -74,17 +73,13 @@ export class TranslationService {
         },
       });
       const results = await detector.detect(text);
-      
+
       if (results && results.length > 0) {
         return results[0].detectedLanguage;
       }
-      
+
       // Fallback to 'auto' if detection fails
       return 'auto';
-    };
-
-    try {
-      return await detectWithRetry();
     } catch (error) {
       await this.errorHandler.handleError(error, 'language_detection');
       console.warn('Language detection failed, using fallback');
@@ -97,8 +92,8 @@ export class TranslationService {
    * 翻译文本
    */
   public async translate(
-    text: string, 
-    sourceLang: string, 
+    text: string,
+    sourceLang: string,
     targetLang: string
   ): Promise<TranslationResult> {
     // Validate text length
@@ -114,7 +109,12 @@ export class TranslationService {
       return cachedResult;
     }
 
-    const translateWithRetry = async (): Promise<TranslationResult> => {
+    const isAvailable = await this.isTranslationApiAvailable();
+    if (!isAvailable) {
+      throw this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE);
+    }
+
+    try {
       // Detect source language if not provided or is 'auto'
       let detectedSourceLang = sourceLang;
       if (!sourceLang || sourceLang === 'auto') {
@@ -140,10 +140,6 @@ export class TranslationService {
       await this.cacheManager.set(text, sourceLang, targetLang, result);
 
       return result;
-    };
-
-    try {
-      return await translateWithRetry();
     } catch (error) {
       await this.errorHandler.handleError(error, 'translation');
       throw error;
