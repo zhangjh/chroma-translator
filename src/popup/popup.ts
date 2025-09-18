@@ -301,7 +301,6 @@ class PopupController {
 
       const result: TranslationResult = await this.sendMessage(MessageType.TRANSLATE_TEXT, {
         text,
-        sourceLang: 'auto',
         targetLang
       });
 

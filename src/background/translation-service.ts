@@ -67,30 +67,26 @@ export class TranslationService {
       throw this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE);
     }
 
-    try {
-      // Use Chrome's language detection API
-      const detector = await LanguageDetector.create({
-        monitor: (m) => {
-          m.addEventListener('downloadprogress', (e: any) => {
-            const progress = Math.round(e.loaded * 100);
-            console.log(`Downloaded ${progress}%`);
-            this.notifyDownloadProgress('language_detector', progress);
-          });
-        },
-      });
-      const results = await detector.detect(text);
+    // Use Chrome's language detection API
+    const detector = await LanguageDetector.create({
+      monitor: (m) => {
+        m.addEventListener('downloadprogress', (e: any) => {
+          const progress = Math.round(e.loaded * 100);
+          console.log(`Downloaded ${progress}%`);
+          this.notifyDownloadProgress('language_detector', progress);
+        });
+      },
+    });
+    const results = await detector.detect(text);
 
-      if (results && results.length > 0) {
-        return results[0].detectedLanguage;
-      }
+    console.log("detect results: " + JSON.stringify(results));
 
-      // Fallback to 'auto' if detection fails
-      return 'auto';
-    } catch (error) {
-      await this.errorHandler.handleError(error, 'language_detection');
-      console.warn('Language detection failed, using fallback');
-      return 'auto'; // Graceful fallback
+    if (results && results.length > 0) {
+      return results[0].detectedLanguage;
     }
+
+    // Fallback to 'auto' if detection fails
+    return 'auto';
   }
 
   /**
@@ -99,7 +95,7 @@ export class TranslationService {
    */
   public async translate(
     text: string,
-    sourceLang: string,
+    sourceLang?: string,
     targetLang?: string
   ): Promise<TranslationResult> {
     // Validate text length
@@ -108,28 +104,47 @@ export class TranslationService {
       throw validationError;
     }
 
+    const isAvailable = await this.isTranslationApiAvailable();
+    if (!isAvailable) {
+      await this.errorHandler.handleError(
+        this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE), 
+        "translation");
+    }
+
+    // Detect source language if not provided
+    let detectedSourceLang: string = '';
+    if (!sourceLang) {
+      detectedSourceLang = await this.detectLanguage(text);
+    }
+
     // Use default target language if not provided
     const finalTargetLang = targetLang || await this.settingsManager.getDefaultTargetLanguage();
 
+    console.log("sourceLang:" + detectedSourceLang);
+    console.log("targetLang:" + targetLang);
+    // Check if source and target languages are the same
+    if (finalTargetLang.startsWith(detectedSourceLang)) {
+      console.log('Source and target languages are the same, returning original text');
+      const result: TranslationResult = {
+        translatedText: text,
+        detectedLanguage: detectedSourceLang,
+        confidence: 1.0,
+        status: TranslationStatus.COMPLETED
+      };
+
+      // Cache the result
+      await this.cacheManager.set(text, detectedSourceLang, finalTargetLang, result);
+      return result;
+    }
+
     // Check cache first
-    const cachedResult = await this.cacheManager.get(text, sourceLang, finalTargetLang);
+    const cachedResult = await this.cacheManager.get(text, detectedSourceLang, finalTargetLang);
     if (cachedResult) {
       console.log('Translation cache hit');
       return cachedResult;
     }
 
-    const isAvailable = await this.isTranslationApiAvailable();
-    if (!isAvailable) {
-      throw this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE);
-    }
-
     try {
-      // Detect source language if not provided or is 'auto'
-      let detectedSourceLang = sourceLang;
-      if (!sourceLang || sourceLang === 'auto') {
-        detectedSourceLang = await this.detectLanguage(text);
-      }
-
       // Perform translation
       const translator = await Translator.create({
         sourceLanguage: detectedSourceLang,
@@ -153,7 +168,7 @@ export class TranslationService {
       };
 
       // Cache the result
-      await this.cacheManager.set(text, sourceLang, finalTargetLang, result);
+      await this.cacheManager.set(text, detectedSourceLang, finalTargetLang, result);
 
       return result;
     } catch (error) {
@@ -212,7 +227,7 @@ export class TranslationService {
       // Process texts in smaller batches to avoid overwhelming the API
       const batchSize = 5; // Smaller batch size for Chrome API
       const batches = [];
-      
+
       for (let i = 0; i < texts.length; i += batchSize) {
         batches.push(texts.slice(i, i + batchSize));
       }

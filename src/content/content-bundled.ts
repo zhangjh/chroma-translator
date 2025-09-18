@@ -1150,7 +1150,6 @@ class ContentScript {
         type: MessageType.TRANSLATE_BATCH,
         data: {
           texts,
-          sourceLang: 'auto',
           targetLang: this.currentTargetLanguage
         },
         requestId: this.generateRequestId()
