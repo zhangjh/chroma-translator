@@ -1,19 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Translation Extension</title>
     <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
     <div class="container">
         <header class="header">
             <h1 class="title">翻译助手</h1>
             <button class="settings-btn" id="settingsBtn" title="设置">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M12 1v6m0 10v6m11-7h-6m-10 0H1m15.5-3.5L19 8.5m-14 7L7.5 13M16.5 10.5L19 8.5m-14 7L7.5 13"></path>
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
                 </svg>
             </button>
         </header>
@@ -25,12 +34,7 @@
                     <span class="language-label">检测到:</span>
                     <span class="detected-language" id="detectedLanguage">自动检测</span>
                 </div>
-                <textarea 
-                    class="input-text" 
-                    id="inputText" 
-                    placeholder="输入要翻译的文本..."
-                    rows="4"
-                ></textarea>
+                <textarea class="input-text" id="inputText" placeholder="输入要翻译的文本..." rows="4"></textarea>
             </div>
 
             <!-- 语言选择和翻译按钮 -->
@@ -70,7 +74,8 @@
                 <div class="result-header">
                     <span class="result-label">翻译结果:</span>
                     <button class="copy-btn" id="copyBtn" title="复制">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
@@ -102,4 +107,5 @@
     </div>
     <script type="module" src="../../dist/src/popup/popup.js"></script>
 </body>
+
 </html>

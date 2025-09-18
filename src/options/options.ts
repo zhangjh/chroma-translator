@@ -21,17 +21,6 @@ class OptionsPage {
     
     // Language settings
     defaultTargetLanguage: HTMLSelectElement;
-    autoDetectLanguage: HTMLInputElement;
-    
-    // Translation behavior
-    showTranslationTooltip: HTMLInputElement;
-    enableFullPageTranslation: HTMLInputElement;
-    enableStreamingTranslation: HTMLInputElement;
-    translationDelay: HTMLInputElement;
-    
-    // Keyboard shortcuts
-    translateSelectedShortcut: HTMLInputElement;
-    translateFullPageShortcut: HTMLInputElement;
     
     // Action buttons
     saveSettings: HTMLButtonElement;
@@ -54,13 +43,6 @@ class OptionsPage {
       message: document.getElementById('message') as HTMLElement,
       loadingOverlay: document.getElementById('loadingOverlay') as HTMLElement,
       defaultTargetLanguage: document.getElementById('defaultTargetLanguage') as HTMLSelectElement,
-      autoDetectLanguage: document.getElementById('autoDetectLanguage') as HTMLInputElement,
-      showTranslationTooltip: document.getElementById('showTranslationTooltip') as HTMLInputElement,
-      enableFullPageTranslation: document.getElementById('enableFullPageTranslation') as HTMLInputElement,
-      enableStreamingTranslation: document.getElementById('enableStreamingTranslation') as HTMLInputElement,
-      translationDelay: document.getElementById('translationDelay') as HTMLInputElement,
-      translateSelectedShortcut: document.getElementById('translateSelectedShortcut') as HTMLInputElement,
-      translateFullPageShortcut: document.getElementById('translateFullPageShortcut') as HTMLInputElement,
       saveSettings: document.getElementById('saveSettings') as HTMLButtonElement,
       resetSettings: document.getElementById('resetSettings') as HTMLButtonElement
     };
@@ -89,34 +71,13 @@ class OptionsPage {
 
     // Form change detection for unsaved changes warning
     const formElements = [
-      this.elements.defaultTargetLanguage,
-      this.elements.autoDetectLanguage,
-      this.elements.showTranslationTooltip,
-      this.elements.enableFullPageTranslation,
-      this.elements.enableStreamingTranslation,
-      this.elements.translationDelay,
-      this.elements.translateSelectedShortcut,
-      this.elements.translateFullPageShortcut
+      this.elements.defaultTargetLanguage
     ];
 
     formElements.forEach(element => {
       element.addEventListener('change', () => {
         this.onFormChange();
       });
-    });
-
-    // Keyboard shortcut validation
-    this.elements.translateSelectedShortcut.addEventListener('blur', () => {
-      this.validateShortcut(this.elements.translateSelectedShortcut);
-    });
-
-    this.elements.translateFullPageShortcut.addEventListener('blur', () => {
-      this.validateShortcut(this.elements.translateFullPageShortcut);
-    });
-
-    // Translation delay validation
-    this.elements.translationDelay.addEventListener('input', () => {
-      this.validateDelay();
     });
   }
 
@@ -167,13 +128,6 @@ class OptionsPage {
    */
   private populateForm(): void {
     this.elements.defaultTargetLanguage.value = this.currentSettings.defaultTargetLanguage;
-    this.elements.autoDetectLanguage.checked = this.currentSettings.autoDetectLanguage;
-    this.elements.showTranslationTooltip.checked = this.currentSettings.showTranslationTooltip;
-    this.elements.enableFullPageTranslation.checked = this.currentSettings.enableFullPageTranslation;
-    this.elements.enableStreamingTranslation.checked = this.currentSettings.enableStreamingTranslation;
-    this.elements.translationDelay.value = this.currentSettings.translationDelay.toString();
-    this.elements.translateSelectedShortcut.value = this.currentSettings.shortcuts.translateSelected;
-    this.elements.translateFullPageShortcut.value = this.currentSettings.shortcuts.translateFullPage;
   }
 
   /**
@@ -181,16 +135,8 @@ class OptionsPage {
    */
   private collectFormData(): Settings {
     return {
-      defaultTargetLanguage: this.elements.defaultTargetLanguage.value,
-      autoDetectLanguage: this.elements.autoDetectLanguage.checked,
-      showTranslationTooltip: this.elements.showTranslationTooltip.checked,
-      enableFullPageTranslation: this.elements.enableFullPageTranslation.checked,
-      enableStreamingTranslation: this.elements.enableStreamingTranslation.checked,
-      translationDelay: parseInt(this.elements.translationDelay.value, 10),
-      shortcuts: {
-        translateSelected: this.elements.translateSelectedShortcut.value,
-        translateFullPage: this.elements.translateFullPageShortcut.value
-      }
+      ...this.currentSettings,
+      defaultTargetLanguage: this.elements.defaultTargetLanguage.value
     };
   }
 
@@ -269,32 +215,6 @@ class OptionsPage {
     // For now, just ensure buttons are enabled
     if (!this.isLoading) {
       this.setButtonsEnabled(true);
-    }
-  }
-
-  /**
-   * Validate keyboard shortcut input
-   */
-  private validateShortcut(input: HTMLInputElement): void {
-    const value = input.value.trim();
-    if (value && !SettingsValidator.isValidShortcut(value)) {
-      input.setCustomValidity('Invalid shortcut format. Use format like "Ctrl+Shift+T"');
-      input.reportValidity();
-    } else {
-      input.setCustomValidity('');
-    }
-  }
-
-  /**
-   * Validate translation delay input
-   */
-  private validateDelay(): void {
-    const value = parseInt(this.elements.translationDelay.value, 10);
-    if (isNaN(value) || value < 0 || value > 5000) {
-      this.elements.translationDelay.setCustomValidity('Delay must be between 0 and 5000 milliseconds');
-      this.elements.translationDelay.reportValidity();
-    } else {
-      this.elements.translationDelay.setCustomValidity('');
     }
   }
 

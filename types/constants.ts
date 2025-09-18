@@ -13,8 +13,8 @@ export const DEFAULT_SETTINGS: Settings = {
   enableStreamingTranslation: true,
   translationDelay: 500, // 500ms debounce delay
   shortcuts: {
-    translateSelected: 'Ctrl+Shift+T',
-    translateFullPage: 'Ctrl+Shift+F'
+    translateSelected: 'Alt+Shift+T',
+    translateFullPage: 'Alt+Shift+F'
   }
 };
 
@@ -34,9 +34,6 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  { code: 'th', name: 'Thai', nativeName: 'ไทย' },
-  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' }
 ];
 
 /**

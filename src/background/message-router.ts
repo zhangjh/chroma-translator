@@ -2,6 +2,7 @@ import { MessageType, Message, MessageResponse } from '../../types/api.js';
 import { TranslationService } from './translation-service.js';
 import { BatchTranslationManager } from './batch-translation-manager.js';
 import { Settings } from '../../types/interfaces.js';
+import { STORAGE_KEYS, DEFAULT_SETTINGS } from '../../types/constants.js';
 
 /**
  * Message Router
@@ -150,21 +151,13 @@ export class MessageRouter {
    */
   private async handleGetSettings(): Promise<Settings> {
     return new Promise((resolve) => {
-      chrome.storage.sync.get(null, (items) => {
-        const defaultSettings: Settings = {
-          defaultTargetLanguage: 'en',
-          autoDetectLanguage: true,
-          showTranslationTooltip: true,
-          enableFullPageTranslation: true,
-          enableStreamingTranslation: true,
-          translationDelay: 300,
-          shortcuts: {
-            translateSelected: 'Ctrl+Shift+T',
-            translateFullPage: 'Ctrl+Shift+F'
-          }
-        };
-
-        resolve({ ...defaultSettings, ...items });
+      chrome.storage.sync.get(STORAGE_KEYS.SETTINGS, (items) => {
+        const storedSettings = items[STORAGE_KEYS.SETTINGS];
+        if (storedSettings) {
+          resolve({ ...DEFAULT_SETTINGS, ...storedSettings });
+        } else {
+          resolve(DEFAULT_SETTINGS);
+        }
       });
     });
   }
@@ -174,7 +167,7 @@ export class MessageRouter {
    */
   private async handleSaveSettings(data: { settings: Settings }): Promise<void> {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.set(data.settings, () => {
+      chrome.storage.sync.set({ [STORAGE_KEYS.SETTINGS]: data.settings }, () => {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
         } else {

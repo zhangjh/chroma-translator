@@ -129,6 +129,7 @@ class PopupController {
     try {
       // 加载设置
       this.settings = await this.sendMessage(MessageType.GET_SETTINGS);
+      console.log('Loaded settings:', this.settings); // Debug log
 
       // 初始化防抖函数
       this.initializeDebouncedFunctions();
@@ -138,8 +139,12 @@ class PopupController {
       this.populateLanguageOptions(languages);
 
       // 设置默认目标语言
-      if (this.settings) {
+      if (this.settings && this.settings.defaultTargetLanguage) {
+        console.log('Setting default target language to:', this.settings.defaultTargetLanguage); // Debug log
         this.elements.targetLanguage.value = this.settings.defaultTargetLanguage;
+        
+        // 验证设置是否成功
+        console.log('Target language select value after setting:', this.elements.targetLanguage.value); // Debug log
       }
 
       // 检查是否有选中的文本
@@ -468,8 +473,13 @@ class PopupController {
     if (!this.settings) return;
 
     try {
-      this.settings.defaultTargetLanguage = this.elements.targetLanguage.value;
+      const newLanguage = this.elements.targetLanguage.value;
+      console.log('Saving target language preference:', newLanguage); // Debug log
+      
+      this.settings.defaultTargetLanguage = newLanguage;
       await this.sendMessage(MessageType.SAVE_SETTINGS, { settings: this.settings });
+      
+      console.log('Target language preference saved successfully'); // Debug log
     } catch (error) {
       console.error('Failed to save language preference:', error);
     }

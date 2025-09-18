@@ -24,71 +24,9 @@
                 </select>
                 <p class="setting-description">Choose the default language for translations</p>
             </div>
-            
-            <div class="setting-item">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="autoDetectLanguage">
-                    <span class="checkmark"></span>
-                    Auto-detect source language
-                </label>
-                <p class="setting-description">Automatically detect the language of text to translate</p>
-            </div>
         </section>
         
-        <!-- Translation Behavior Section -->
-        <section class="settings-section">
-            <h2>Translation Behavior</h2>
-            
-            <div class="setting-item">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="showTranslationTooltip">
-                    <span class="checkmark"></span>
-                    Show translation tooltip for selected text
-                </label>
-                <p class="setting-description">Display translation results in a tooltip when text is selected</p>
-            </div>
-            
-            <div class="setting-item">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="enableFullPageTranslation">
-                    <span class="checkmark"></span>
-                    Enable full page translation
-                </label>
-                <p class="setting-description">Allow translating entire web pages</p>
-            </div>
-            
-            <div class="setting-item">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="enableStreamingTranslation">
-                    <span class="checkmark"></span>
-                    Enable streaming translation
-                </label>
-                <p class="setting-description">Show translation results as they become available</p>
-            </div>
-            
-            <div class="setting-item">
-                <label for="translationDelay">Translation Delay (ms):</label>
-                <input type="number" id="translationDelay" min="0" max="5000" step="100" class="number-input">
-                <p class="setting-description">Delay before starting translation to avoid excessive API calls</p>
-            </div>
-        </section>
-        
-        <!-- Keyboard Shortcuts Section -->
-        <section class="settings-section">
-            <h2>Keyboard Shortcuts</h2>
-            
-            <div class="setting-item">
-                <label for="translateSelectedShortcut">Translate Selected Text:</label>
-                <input type="text" id="translateSelectedShortcut" class="shortcut-input" placeholder="e.g., Ctrl+Shift+T">
-                <p class="setting-description">Keyboard shortcut to translate selected text</p>
-            </div>
-            
-            <div class="setting-item">
-                <label for="translateFullPageShortcut">Translate Full Page:</label>
-                <input type="text" id="translateFullPageShortcut" class="shortcut-input" placeholder="e.g., Ctrl+Shift+F">
-                <p class="setting-description">Keyboard shortcut to translate the entire page</p>
-            </div>
-        </section>
+
         
         <!-- Action Buttons -->
         <div class="actions">
