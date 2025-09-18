@@ -1571,7 +1571,6 @@ Full Page Translation Progress Overlay */
   .chrome-translating-element {
     background: linear-gradient(90deg, transparent, rgba(138, 180, 248, 0.15), transparent);
   }
-}ound-position: -200% 0; }
 }
 
 .chrome-translation-loading {
