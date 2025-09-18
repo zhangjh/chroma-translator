@@ -1,4 +1,174 @@
 /**
+ * Content script i18n - matches main i18n system
+ * This is a standalone version for content script since it can't import modules
+ */
+const CONTENT_I18N_TEXTS = {
+  'zh-CN': {
+    translating: '翻译中...',
+    translatingText: '正在翻译...',
+    translatingPage: '正在翻译页面',
+    cancelTranslation: '取消翻译',
+    translate: '翻译',
+    close: '关闭',
+    copy: '复制',
+    copied: '已复制 ✓',
+    copyFailed: '复制失败',
+    copyTooltip: '复制翻译结果',
+    preparing: '准备中...',
+    completed: '翻译完成'
+  },
+  'zh-TW': {
+    translating: '翻譯中...',
+    translatingText: '正在翻譯...',
+    translatingPage: '正在翻譯頁面',
+    cancelTranslation: '取消翻譯',
+    translate: '翻譯',
+    close: '關閉',
+    copy: '複製',
+    copied: '已複製 ✓',
+    copyFailed: '複製失敗',
+    copyTooltip: '複製翻譯結果',
+    preparing: '準備中...',
+    completed: '翻譯完成'
+  },
+  'en': {
+    translating: 'Translating...',
+    translatingText: 'Translating...',
+    translatingPage: 'Translating page',
+    cancelTranslation: 'Cancel translation',
+    translate: 'Translate',
+    close: 'Close',
+    copy: 'Copy',
+    copied: 'Copied ✓',
+    copyFailed: 'Copy failed',
+    copyTooltip: 'Copy translation result',
+    preparing: 'Preparing...',
+    completed: 'Translation completed'
+  },
+  'ja': {
+    translating: '翻訳中...',
+    translatingText: '翻訳中...',
+    translatingPage: 'ページを翻訳中',
+    cancelTranslation: '翻訳をキャンセル',
+    translate: '翻訳',
+    close: '閉じる',
+    copy: 'コピー',
+    copied: 'コピー済み ✓',
+    copyFailed: 'コピー失敗',
+    copyTooltip: '翻訳結果をコピー',
+    preparing: '準備中...',
+    completed: '翻訳完了'
+  },
+  'ko': {
+    translating: '번역 중...',
+    translatingText: '번역 중...',
+    translatingPage: '페이지 번역 중',
+    cancelTranslation: '번역 취소',
+    translate: '번역',
+    close: '닫기',
+    copy: '복사',
+    copied: '복사됨 ✓',
+    copyFailed: '복사 실패',
+    copyTooltip: '번역 결과 복사',
+    preparing: '준비 중...',
+    completed: '번역 완료'
+  },
+  'es': {
+    translating: 'Traduciendo...',
+    translatingText: 'Traduciendo...',
+    translatingPage: 'Traduciendo página',
+    cancelTranslation: 'Cancelar traducción',
+    translate: 'Traducir',
+    close: 'Cerrar',
+    copy: 'Copiar',
+    copied: 'Copiado ✓',
+    copyFailed: 'Error al copiar',
+    copyTooltip: 'Copiar resultado de traducción',
+    preparing: 'Preparando...',
+    completed: 'Traducción completada'
+  },
+  'fr': {
+    translating: 'Traduction...',
+    translatingText: 'Traduction...',
+    translatingPage: 'Traduction de la page',
+    cancelTranslation: 'Annuler la traduction',
+    translate: 'Traduire',
+    close: 'Fermer',
+    copy: 'Copier',
+    copied: 'Copié ✓',
+    copyFailed: 'Échec de la copie',
+    copyTooltip: 'Copier le résultat de traduction',
+    preparing: 'Préparation...',
+    completed: 'Traduction terminée'
+  },
+  'de': {
+    translating: 'Übersetzen...',
+    translatingText: 'Übersetzen...',
+    translatingPage: 'Seite übersetzen',
+    cancelTranslation: 'Übersetzung abbrechen',
+    translate: 'Übersetzen',
+    close: 'Schließen',
+    copy: 'Kopieren',
+    copied: 'Kopiert ✓',
+    copyFailed: 'Kopieren fehlgeschlagen',
+    copyTooltip: 'Übersetzungsergebnis kopieren',
+    preparing: 'Vorbereitung...',
+    completed: 'Übersetzung abgeschlossen'
+  },
+  'ru': {
+    translating: 'Перевод...',
+    translatingText: 'Перевод...',
+    translatingPage: 'Перевод страницы',
+    cancelTranslation: 'Отменить перевод',
+    translate: 'Перевести',
+    close: 'Закрыть',
+    copy: 'Копировать',
+    copied: 'Скопировано ✓',
+    copyFailed: 'Ошибка копирования',
+    copyTooltip: 'Копировать результат перевода',
+    preparing: 'Подготовка...',
+    completed: 'Перевод завершен'
+  }
+};
+
+/**
+ * Current UI language for content script
+ * Will be set based on user's target language selection
+ */
+let currentContentUILanguage = 'zh-CN';
+
+/**
+ * Set UI language for content script
+ */
+function setContentUILanguage(targetLang: string): void {
+  // Map target language to UI language (same logic as main i18n)
+  const languageMap: Record<string, string> = {
+    'zh-CN': 'zh-CN',
+    'zh-TW': 'zh-TW', 
+    'zh': 'zh-CN',
+    'en': 'en',
+    'ja': 'ja',
+    'ko': 'ko',
+    'es': 'es',
+    'fr': 'fr',
+    'de': 'de',
+    'ru': 'ru'
+  };
+  
+  currentContentUILanguage = languageMap[targetLang] || 'en';
+}
+
+/**
+ * Get internationalized text for content script
+ * Uses current UI language with fallback to Chinese
+ */
+function getI18nText(key: string): string {
+  // Get texts for the current language, fallback to Chinese
+  const texts = CONTENT_I18N_TEXTS[currentContentUILanguage as keyof typeof CONTENT_I18N_TEXTS] || CONTENT_I18N_TEXTS['zh-CN'];
+  return texts[key as keyof typeof texts] || key;
+}
+
+/**
  * Translation error types
  */
 enum TranslationErrorType {
@@ -375,18 +545,18 @@ class ContentScript {
 
     tooltip.innerHTML = `
       <div class="chrome-translate-tooltip-header">
-        <span class="chrome-translate-tooltip-title">翻译</span>
-        <button class="chrome-translate-tooltip-close" title="关闭" aria-label="关闭翻译弹框">×</button>
+        <span class="chrome-translate-tooltip-title">${getI18nText('translate')}</span>
+        <button class="chrome-translate-tooltip-close" title="${getI18nText('close')}" aria-label="${getI18nText('close')}">×</button>
       </div>
       <div class="chrome-translate-tooltip-content">
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(text)}</div>
         <div class="chrome-translate-tooltip-loading">
           <div class="chrome-translate-tooltip-spinner"></div>
-          <span>正在翻译...</span>
+          <span>${getI18nText('translatingText')}</span>
         </div>
       </div>
       <div class="chrome-translate-tooltip-actions">
-        <button class="chrome-translate-tooltip-button" disabled>翻译中...</button>
+        <button class="chrome-translate-tooltip-button" disabled>${getI18nText('translating')}</button>
       </div>
     `;
 
@@ -593,7 +763,7 @@ class ContentScript {
 
     if (actions) {
       actions.innerHTML = `
-        <button class="chrome-translate-tooltip-button secondary" title="复制翻译结果">复制</button>
+        <button class="chrome-translate-tooltip-button secondary" title="${getI18nText('copyTooltip')}">${getI18nText('copy')}</button>
       `;
 
       // Add event listeners for action buttons
@@ -603,16 +773,16 @@ class ContentScript {
         copyButton.addEventListener('click', () => {
           navigator.clipboard.writeText(translatedText).then(() => {
             const originalText = (copyButton as HTMLElement).textContent;
-            (copyButton as HTMLElement).textContent = '已复制 ✓';
+            (copyButton as HTMLElement).textContent = getI18nText('copied');
             (copyButton as HTMLElement).style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
             setTimeout(() => {
               (copyButton as HTMLElement).textContent = originalText;
               (copyButton as HTMLElement).style.background = '';
             }, 1500);
           }).catch(() => {
-            (copyButton as HTMLElement).textContent = '复制失败';
+            (copyButton as HTMLElement).textContent = getI18nText('copyFailed');
             setTimeout(() => {
-              (copyButton as HTMLElement).textContent = '复制';
+              (copyButton as HTMLElement).textContent = getI18nText('copy');
             }, 1500);
           });
         });
@@ -646,7 +816,7 @@ class ContentScript {
 
     if (actions) {
       actions.innerHTML = `
-        <button class="chrome-translate-tooltip-button secondary" title="关闭">关闭</button>
+        <button class="chrome-translate-tooltip-button secondary" title="${getI18nText('close')}">${getI18nText('close')}</button>
       `;
 
       // Add close button event listener
@@ -667,6 +837,17 @@ class ContentScript {
    */
   private async translateSelectedText(text: string): Promise<void> {
     try {
+      // Get user settings to determine target language and set UI language
+      const settingsMessage: Message = {
+        type: MessageType.GET_SETTINGS,
+        requestId: this.generateRequestId()
+      };
+      
+      const settingsResponse = await this.sendMessageToBackground(settingsMessage);
+      if (settingsResponse.success && settingsResponse.data?.defaultTargetLanguage) {
+        setContentUILanguage(settingsResponse.data.defaultTargetLanguage);
+      }
+      
       // Send translation request to background script
       const message: Message = {
         type: MessageType.TRANSLATE_SELECTED,
@@ -876,6 +1057,9 @@ class ContentScript {
     try {
       this.isTranslating = true;
       this.currentTargetLanguage = targetLang || 'en';
+      
+      // Set UI language based on target language
+      setContentUILanguage(this.currentTargetLanguage);
 
       // Find all translatable elements
       this.findTranslatableElements();
@@ -885,21 +1069,21 @@ class ContentScript {
         return;
       }
 
-      // Show progress overlay
-      this.showProgressOverlay();
+      // Show floating progress indicator instead of overlay
+      this.showFloatingProgress();
 
-      // Translate elements in batches
-      await this.translateElementsBatch();
+      // Translate elements one by one with real-time updates
+      await this.translateElementsRealtime();
 
-      // Hide progress overlay
-      this.hideProgressOverlay();
+      // Hide floating progress indicator
+      this.hideFloatingProgress();
 
       console.log(`Full page translation completed: ${this.translatableElements.length} elements translated`);
 
     } catch (error) {
       console.error('Full page translation failed:', error);
-      this.hideProgressOverlay();
-      this.showTranslationError('全页翻译失败，请重试');
+      this.hideFloatingProgress();
+      this.showTranslationError('Failed to translate full page');
     } finally {
       this.isTranslating = false;
     }
@@ -1099,79 +1283,62 @@ class ContentScript {
   }
 
   /**
-   * Translate elements in batches
+   * Translate elements in real-time with visual feedback
    */
-  private async translateElementsBatch(): Promise<void> {
-    const batchSize = CONFIG.MAX_BATCH_SIZE;
-    const totalBatches = Math.ceil(this.translatableElements.length / batchSize);
+  private async translateElementsRealtime(): Promise<void> {
+    let translatedCount = 0;
 
-    for (let i = 0; i < totalBatches; i++) {
-      const startIndex = i * batchSize;
-      const endIndex = Math.min(startIndex + batchSize, this.translatableElements.length);
-      const batch = this.translatableElements.slice(startIndex, endIndex);
+    for (let i = 0; i < this.translatableElements.length; i++) {
+      if (!this.isTranslating) {
+        break; // Translation was cancelled
+      }
+
+      const element = this.translatableElements[i];
+
+      // Highlight current element being translated
+      this.highlightTranslatingElement(element.element);
 
       // Update progress
       const progress: TranslationProgress = {
         totalElements: this.translatableElements.length,
-        translatedElements: startIndex,
-        currentElement: `批次 ${i + 1}/${totalBatches}`,
-        percentage: Math.round((startIndex / this.translatableElements.length) * 100)
+        translatedElements: translatedCount,
+        currentElement: this.truncateText(element.originalText, 50),
+        percentage: Math.round((translatedCount / this.translatableElements.length) * 100)
       };
-      this.updateProgressDisplay(progress);
+      this.updateFloatingProgress(progress);
 
-      // Translate batch
-      await this.translateBatch(batch);
+      try {
+        // Translate single element
+        const result = await this.translateSingleElement(element);
 
-      // Small delay between batches to prevent overwhelming the API
-      if (i < totalBatches - 1) {
-        await this.delay(100);
+        if (result && result.translatedText) {
+          // Apply translation immediately
+          this.applyTranslationToElement(element, result.translatedText);
+          translatedCount++;
+
+          // Show translation animation
+          this.showTranslationAnimation(element.element);
+        }
+      } catch (error) {
+        console.error('Failed to translate element:', error);
+        // Continue with next element
       }
+
+      // Remove highlight
+      this.removeTranslatingHighlight(element.element);
+
+      // Small delay to make the process visible
+      await this.delay(50);
     }
 
     // Final progress update
     const finalProgress: TranslationProgress = {
       totalElements: this.translatableElements.length,
-      translatedElements: this.translatableElements.length,
-      currentElement: '翻译完成',
+      translatedElements: translatedCount,
+      currentElement: getI18nText('completed'),
       percentage: 100
     };
-    this.updateProgressDisplay(finalProgress);
-  }
-
-  /**
-   * Translate a batch of elements
-   */
-  private async translateBatch(batch: TranslatableElement[]): Promise<void> {
-    const texts = batch.map(item => item.originalText);
-
-    try {
-      // Send batch translation request to background script
-      const message: Message = {
-        type: MessageType.TRANSLATE_BATCH,
-        data: {
-          texts,
-          targetLang: this.currentTargetLanguage
-        },
-        requestId: this.generateRequestId()
-      };
-
-      const response = await this.sendMessageToBackground(message);
-
-      if (response.success && response.data) {
-        const results = response.data as any[];
-
-        // Apply translations to elements
-        batch.forEach((item, index) => {
-          if (results[index] && results[index].translatedText) {
-            this.applyTranslationToElement(item, results[index].translatedText);
-          }
-        });
-      } else {
-        console.error('Batch translation failed:', response.error);        
-      }
-    } catch (error) {
-      console.error('Batch translation error:', error);
-    }
+    this.updateFloatingProgress(finalProgress);
   }
 
   /**
@@ -1381,50 +1548,43 @@ class ContentScript {
   }
 
   /**
-   * Show progress overlay
+   * Show floating progress indicator
    */
-  private showProgressOverlay(): void {
-    this.hideProgressOverlay(); // Remove any existing overlay
+  private showFloatingProgress(): void {
+    this.hideFloatingProgress(); // Remove any existing indicator
 
     this.progressOverlay = document.createElement('div');
-    this.progressOverlay.className = 'chrome-translation-progress-overlay';
+    this.progressOverlay.className = 'chrome-translation-floating-progress';
     this.progressOverlay.innerHTML = `
-      <div class="chrome-translation-progress-modal">
-        <div class="chrome-translation-progress-header">
-          <h3>正在翻译页面</h3>
-          <button class="chrome-translation-progress-close" title="取消翻译">×</button>
+      <div class="chrome-translation-floating-content">
+        <div class="chrome-translation-floating-header">
+          <span class="chrome-translation-floating-icon">🌐</span>
+          <span class="chrome-translation-floating-title">${getI18nText('translating')}</span>
+          <button class="chrome-translation-floating-close" title="${getI18nText('cancelTranslation')}">×</button>
         </div>
-        <div class="chrome-translation-progress-content">
-          <div class="chrome-translation-progress-bar">
-            <div class="chrome-translation-progress-fill"></div>
+        <div class="chrome-translation-floating-progress">
+          <div class="chrome-translation-floating-bar">
+            <div class="chrome-translation-floating-fill"></div>
           </div>
-          <div class="chrome-translation-progress-text">准备中...</div>
-          <div class="chrome-translation-progress-stats">
-            <span class="chrome-translation-progress-current">0</span> / 
-            <span class="chrome-translation-progress-total">0</span> 元素
+          <div class="chrome-translation-floating-text">${getI18nText('preparing')}</div>
+          <div class="chrome-translation-floating-stats">
+            <span class="chrome-translation-floating-current">0</span> / 
+            <span class="chrome-translation-floating-total">0</span>
           </div>
-        </div>
-        <div class="chrome-translation-progress-actions">
-          <button class="chrome-translation-progress-cancel">取消翻译</button>
         </div>
       </div>
     `;
 
     // Add event listeners
-    const closeBtn = this.progressOverlay.querySelector('.chrome-translation-progress-close');
-    const cancelBtn = this.progressOverlay.querySelector('.chrome-translation-progress-cancel');
-
+    const closeBtn = this.progressOverlay.querySelector('.chrome-translation-floating-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
         this.cancelTranslation();
       });
     }
 
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        this.cancelTranslation();
-      });
-    }
+    // Make it draggable
+    this.makeFloatingProgressDraggable();
 
     document.body.appendChild(this.progressOverlay);
 
@@ -1528,6 +1688,165 @@ class ContentScript {
         errorNotification.parentNode.removeChild(errorNotification);
       }
     }, 5000);
+  }
+
+  /**
+   * Translate single element
+   */
+  private async translateSingleElement(element: TranslatableElement): Promise<any> {
+    try {
+      const message: Message = {
+        type: MessageType.TRANSLATE_TEXT,
+        data: {
+          text: element.originalText,
+          targetLang: this.currentTargetLanguage
+        },
+        requestId: this.generateRequestId()
+      };
+
+      const response = await this.sendMessageToBackground(message);
+      return response.success ? response.data : null;
+    } catch (error) {
+      console.error('Single element translation error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Highlight element being translated
+   */
+  private highlightTranslatingElement(element: HTMLElement): void {
+    element.classList.add(CSS_CLASSES.TRANSLATING_ELEMENT);
+    element.style.setProperty('--translation-highlight', 'rgba(66, 133, 244, 0.2)');
+  }
+
+  /**
+   * Remove translating highlight
+   */
+  private removeTranslatingHighlight(element: HTMLElement): void {
+    element.classList.remove(CSS_CLASSES.TRANSLATING_ELEMENT);
+    element.style.removeProperty('--translation-highlight');
+  }
+
+  /**
+   * Show translation animation
+   */
+  private showTranslationAnimation(element: HTMLElement): void {
+    element.classList.add('chrome-translation-animated');
+    setTimeout(() => {
+      element.classList.remove('chrome-translation-animated');
+    }, 600);
+  }
+
+  /**
+   * Update floating progress indicator
+   */
+  private updateFloatingProgress(progress: TranslationProgress): void {
+    if (!this.progressOverlay) return;
+
+    const progressFill = this.progressOverlay.querySelector('.chrome-translation-floating-fill') as HTMLElement;
+    const progressText = this.progressOverlay.querySelector('.chrome-translation-floating-text') as HTMLElement;
+    const currentSpan = this.progressOverlay.querySelector('.chrome-translation-floating-current') as HTMLElement;
+    const totalSpan = this.progressOverlay.querySelector('.chrome-translation-floating-total') as HTMLElement;
+
+    if (progressFill) {
+      progressFill.style.width = `${progress.percentage}%`;
+    }
+
+    if (progressText) {
+      progressText.textContent = progress.currentElement;
+    }
+
+    if (currentSpan) {
+      currentSpan.textContent = progress.translatedElements.toString();
+    }
+
+    if (totalSpan) {
+      totalSpan.textContent = progress.totalElements.toString();
+    }
+  }
+
+  /**
+   * Hide floating progress indicator
+   */
+  private hideFloatingProgress(): void {
+    if (this.progressOverlay) {
+      this.progressOverlay.classList.remove('visible');
+      setTimeout(() => {
+        if (this.progressOverlay && this.progressOverlay.parentNode) {
+          this.progressOverlay.parentNode.removeChild(this.progressOverlay);
+          this.progressOverlay = null;
+        }
+      }, 300);
+    }
+  }
+
+  /**
+   * Make floating progress draggable
+   */
+  private makeFloatingProgressDraggable(): void {
+    if (!this.progressOverlay) return;
+
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    const header = this.progressOverlay.querySelector('.chrome-translation-floating-header') as HTMLElement;
+    if (!header) return;
+
+    header.style.cursor = 'move';
+
+    header.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const rect = this.progressOverlay!.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      e.preventDefault();
+    });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !this.progressOverlay) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newX = initialX + deltaX;
+      const newY = initialY + deltaY;
+
+      // Keep within viewport bounds
+      const maxX = window.innerWidth - this.progressOverlay.offsetWidth;
+      const maxY = window.innerHeight - this.progressOverlay.offsetHeight;
+
+      const clampedX = Math.max(0, Math.min(newX, maxX));
+      const clampedY = Math.max(0, Math.min(newY, maxY));
+
+      this.progressOverlay.style.left = `${clampedX}px`;
+      this.progressOverlay.style.top = `${clampedY}px`;
+      this.progressOverlay.style.right = 'auto';
+      this.progressOverlay.style.bottom = 'auto';
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }
+
+  /**
+   * Truncate text for display
+   */
+  private truncateText(text: string, maxLength: number): string {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength - 3) + '...';
   }
 
   /**

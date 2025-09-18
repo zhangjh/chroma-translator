@@ -57,7 +57,6 @@ export class MessageRouter {
             });
           })
           .catch(error => {
-            console.error('Message handling error:', error);
             sendResponse({
               success: false,
               error: error.message || 'Unknown error occurred',
@@ -86,7 +85,6 @@ export class MessageRouter {
       return await handler(message.data, sender);
     } catch (error) {
       // 添加消息类型定义和错误处理
-      console.error(`Error handling message type ${message.type}:`, error);
       throw error;
     }
   }

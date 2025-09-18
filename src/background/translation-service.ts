@@ -3,6 +3,7 @@ import { MessageType } from '../../types/api.js';
 import { ErrorHandler } from '../shared/error-handler.js';
 import { CacheManager } from '../shared/cache-manager.js';
 import { SettingsManager } from '../shared/settings.js';
+import { I18nManager } from '../shared/i18n.js';
 
 /**
  * Chrome Translation Service
@@ -184,13 +185,19 @@ export class TranslationService {
    */
   private notifyDownloadProgress(modelType: string, progress: number): void {
     try {
+      const i18n = I18nManager.getInstance();
+      const texts = i18n.getTexts();
+      const message = modelType === 'translator' 
+        ? `${texts.downloadingTranslationModel} ${progress}%`
+        : `${texts.downloadingDetectionModel} ${progress}%`;
+      
       // Send progress update to all connected ports (popup)
       chrome.runtime.sendMessage({
         type: MessageType.MODEL_DOWNLOAD_PROGRESS,
         data: {
           modelType,
           progress,
-          message: `正在下载${modelType === 'translator' ? '翻译' : '语言检测'}模型... ${progress}%`
+          message
         }
       }).catch(() => {
         // Ignore errors if no popup is listening

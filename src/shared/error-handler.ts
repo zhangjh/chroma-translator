@@ -32,10 +32,6 @@ export class ErrorHandler {
     retryCallback?: () => Promise<any>
   ): Promise<TranslationError> {
     const translationError = this.parseError(error, context);
-    
-    // Log error for debugging
-    console.error(`Translation error in ${context}:`, error);
-    
     // Notify error listeners
     this.notifyErrorListeners(translationError);
     

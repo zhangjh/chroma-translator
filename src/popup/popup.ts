@@ -159,7 +159,7 @@ class PopupController {
 
     } catch (error) {
       console.error('Failed to load initial data:', error);
-      this.showError('初始化失败，请刷新重试');
+      this.showError(this.i18nManager.getTexts().initializationFailed);
     }
   }
 
@@ -344,7 +344,7 @@ class PopupController {
     }
 
     if (!targetLang) {
-      return '请选择目标语言';
+      return this.i18nManager.getTexts().pleaseSelectTargetLanguage;
     }
 
     return null;
@@ -424,7 +424,7 @@ class PopupController {
 
     } catch (error) {
       console.error('Copy failed:', error);
-      this.showError('复制失败');
+      this.showError(this.i18nManager.getTexts().copyFailed);
     }
   }
 
@@ -452,7 +452,7 @@ class PopupController {
       // Show loading state
       this.showLoading();
       this.elements.translatePageBtn.disabled = true;
-      this.elements.translatePageBtn.textContent = '正在启动翻译...';
+      this.elements.translatePageBtn.textContent = this.i18nManager.getTexts().startingTranslation;
 
       // Send full page translation message to content script
       const response = await chrome.tabs.sendMessage(tab.id, {
@@ -462,14 +462,14 @@ class PopupController {
 
       if (response && response.success) {
         // Show success message briefly before closing
-        this.elements.translatePageBtn.textContent = '翻译已启动 ✓';
+        this.elements.translatePageBtn.textContent = this.i18nManager.getTexts().translationStarted;
         this.elements.translatePageBtn.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
         
         setTimeout(() => {
           window.close();
         }, 1000);
       } else {
-        throw new Error(response?.error || '启动翻译失败');
+        throw new Error(response?.error || this.i18nManager.getTexts().startTranslationFailed);
       }
 
     } catch (error) {
@@ -480,14 +480,15 @@ class PopupController {
       this.elements.translatePageBtn.style.background = '';
       
       // Show user-friendly error message
-      let errorMessage = '全页翻译失败';
+      const texts = this.i18nManager.getTexts();
+      let errorMessage = texts.fullPageTranslationFailed;
       if (error instanceof Error) {
         if (error.message.includes('Could not establish connection')) {
-          errorMessage = '页面不支持翻译，请刷新页面后重试';
+          errorMessage = texts.pageNotSupported;
         } else if (error.message.includes('api_unavailable')) {
-          errorMessage = '翻译API不可用，请检查Chrome版本';
+          errorMessage = texts.apiNotAvailable;
         } else {
-          errorMessage = '翻译失败，请重试';
+          errorMessage = texts.translationFailed;
         }
       }
       
@@ -540,10 +541,9 @@ class PopupController {
     const detectedLabelElement = document.getElementById('detectedLabel');
     if (detectedLabelElement) detectedLabelElement.textContent = texts.detectedLabel;
     
-    // Update auto detect text
-    if (this.elements.detectedLanguage.textContent === '自动检测' || 
-        this.elements.detectedLanguage.textContent === 'Auto Detect' ||
-        this.elements.detectedLanguage.textContent === '自動檢測') {
+    // Update auto detect text if it's currently showing auto detect
+    const currentText = this.elements.detectedLanguage.textContent;
+    if (currentText && (currentText.includes('自动检测') || currentText.includes('Auto Detect') || currentText.includes('自動檢測'))) {
       this.elements.detectedLanguage.textContent = texts.autoDetect;
     }
     
@@ -580,7 +580,7 @@ class PopupController {
    * Update detected language display
    */
   private updateDetectedLanguage(langCode: string): void {
-    // 简单的语言代码到名称映射
+    // Language code to native name mapping
     const langNames: { [key: string]: string } = {
       'en': 'English',
       'zh-CN': '中文(简体)',
