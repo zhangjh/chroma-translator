@@ -46,7 +46,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/content/content.css"
+        "dist/content/content.css",
+        "dist/icons/translate_16.png"
       ],
       "matches": [
         "<all_urls>"

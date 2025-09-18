@@ -144,7 +144,7 @@ function setContentUILanguage(targetLang: string): void {
   // Map target language to UI language (same logic as main i18n)
   const languageMap: Record<string, string> = {
     'zh-CN': 'zh-CN',
-    'zh-TW': 'zh-TW', 
+    'zh-TW': 'zh-TW',
     'zh': 'zh-CN',
     'en': 'en',
     'ja': 'ja',
@@ -308,7 +308,10 @@ class ContentScript {
   private selectedText: string = '';
   private selectionPosition: { x: number; y: number; width?: number; height?: number } = { x: 0, y: 0 };
   private tooltip: HTMLElement | null = null;
+  private translateButton: HTMLElement | null = null;
   private repositionTimeout: number | null = null;
+  private isButtonInteraction: boolean = false;
+  private buttonShowTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.init();
@@ -410,7 +413,6 @@ class ContentScript {
   private handleMouseUp(event: MouseEvent): void {
     // Small delay to ensure selection is complete
     console.log("mouseUp");
-    console.log(this.selectedText);
 
     this.processTextSelection(event.clientX, event.clientY);
   }
@@ -424,6 +426,18 @@ class ContentScript {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       this.selectedText = selection.toString().trim();
+    } else {
+      this.selectedText = '';
+    }
+
+    // Only hide button if no text is selected and we're not in the middle of a button interaction
+    if (!this.selectedText) {
+      // Add a small delay to prevent flickering during button interactions
+      setTimeout(() => {
+        if (!this.selectedText && !this.isButtonInteraction) {
+          this.hideTranslateButton();
+        }
+      }, 100);
     }
   }
 
@@ -431,21 +445,30 @@ class ContentScript {
    * Process text selection and validate it
    */
   private processTextSelection(x: number, y: number): void {
+    // Clear any pending button show timeout
+    if (this.buttonShowTimeout) {
+      clearTimeout(this.buttonShowTimeout);
+    }
+
     const selection = window.getSelection();
     if (selection) {
       this.selectedText = selection.toString().trim();
     }
     if (!this.selectedText) {
+      this.hideTranslateButton();
       return;
     }
 
-    // Get the actual selection bounds instead of just mouse position
+    // Use mouse position as primary positioning, with selection bounds as fallback
+    // This ensures the button appears near where the user clicked
+    this.selectionPosition = { x, y };
+
+    // Get selection bounds for tooltip positioning later
     const selectionBounds = this.getSelectionBounds(selection);
     if (selectionBounds) {
-      this.selectionPosition = selectionBounds;
-    } else {
-      // Fallback to mouse position
-      this.selectionPosition = { x, y };
+      // Store selection bounds for tooltip positioning
+      this.selectionPosition.width = selectionBounds.width;
+      this.selectionPosition.height = selectionBounds.height;
     }
 
     console.log('text selection detected:', {
@@ -454,9 +477,12 @@ class ContentScript {
       length: this.selectedText.length
     });
 
-    // Show translation tooltip and start translation
-    this.showTranslationTooltip(this.selectedText, this.selectionPosition);
-    this.translateSelectedText(this.selectedText);
+    // Add a small delay to stabilize button showing
+    this.buttonShowTimeout = setTimeout(() => {
+      if (this.selectedText) { // Double check text is still selected
+        this.showTranslateButton(this.selectedText, this.selectionPosition);
+      }
+    }, 150);
   }
 
   /**
@@ -508,6 +534,207 @@ class ContentScript {
   }
 
   /**
+   * Show translate button at specified position
+   */
+  private showTranslateButton(text: string, position: { x: number; y: number; width?: number; height?: number }): void {
+
+    // Hide existing button if visible
+    this.hideTranslateButton();
+
+    // Create translate button element
+    this.translateButton = this.createTranslateButtonElement(text);
+
+    // Add button to document
+    document.body.appendChild(this.translateButton);
+
+    // Position button
+    this.positionTranslateButton(position);
+
+    // Show button with animation
+    setTimeout(() => {
+      if (this.translateButton) {
+        this.translateButton.classList.add('visible', 'bounce');
+      }
+    }, 10);
+
+    // Set up click outside handler to hide button
+    setTimeout(() => {
+      document.addEventListener('click', this.handleTranslateButtonClickOutside.bind(this), { once: true });
+    }, 100);
+  }
+
+  /**
+   * Create translate button HTML element
+   */
+  private createTranslateButtonElement(selectedText: string): HTMLElement {
+    const button = document.createElement('div');
+    button.className = 'chrome-translate-button';
+
+    // Store the selected text in the button element
+    button.setAttribute('data-selected-text', selectedText);
+
+    // Use the extension's icon - try different paths for dev and release
+    let iconUrl = '';
+
+    const manifest = chrome.runtime.getManifest();
+    if (manifest.icons && manifest.icons['16']) {
+      iconUrl = chrome.runtime.getURL(manifest.icons['16']);
+    }
+
+    // Use simple text icon for better compatibility
+    button.innerHTML = `
+      <div class="chrome-translate-button-logo">
+        <img src="${iconUrl}" class="chrome-translate-button-text" />
+      </div>
+    `;
+
+    // Add tooltip
+    button.title = getI18nText('translate');
+
+    // Add click event listener
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const textToTranslate = button.getAttribute('data-selected-text') || '';
+      this.handleTranslateButtonClick(textToTranslate);
+    });
+
+    return button;
+  }
+
+  /**
+   * Position translate button near mouse cursor with smart edge detection
+   */
+  private positionTranslateButton(position: { x: number; y: number; width?: number; height?: number }): void {
+    if (!this.translateButton) return;
+
+    const button = this.translateButton;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollX = window.pageXOffset;
+    const scrollY = window.pageYOffset;
+
+    const buttonSize = 28; // Button is 28x28px
+    const offset = 8; // Distance from cursor
+    const margin = 12; // Margin from viewport edges
+
+    // Convert viewport coordinates to page coordinates
+    const mouseX = position.x + scrollX;
+    const mouseY = position.y + scrollY;
+
+    let left: number;
+    let top: number;
+
+    // Calculate available space in all directions from mouse position
+    const spaceRight = viewportWidth - position.x;
+    const spaceLeft = position.x;
+    const spaceBelow = viewportHeight - position.y;
+    const spaceAbove = position.y;
+
+    // Determine best position based on available space
+    // Priority: bottom-right, bottom-left, top-right, top-left
+    if (spaceRight >= buttonSize + margin && spaceBelow >= buttonSize + margin) {
+      // Bottom-right of cursor
+      left = mouseX + offset;
+      top = mouseY + offset;
+    } else if (spaceLeft >= buttonSize + margin && spaceBelow >= buttonSize + margin) {
+      // Bottom-left of cursor
+      left = mouseX - buttonSize - offset;
+      top = mouseY + offset;
+    } else if (spaceRight >= buttonSize + margin && spaceAbove >= buttonSize + margin) {
+      // Top-right of cursor
+      left = mouseX + offset;
+      top = mouseY - buttonSize - offset;
+    } else if (spaceLeft >= buttonSize + margin && spaceAbove >= buttonSize + margin) {
+      // Top-left of cursor
+      left = mouseX - buttonSize - offset;
+      top = mouseY - buttonSize - offset;
+    } else {
+      // Fallback: position at cursor with boundary constraints
+      left = mouseX;
+      top = mouseY - buttonSize - offset;
+    }
+
+    // Apply viewport boundary constraints
+    left = Math.max(scrollX + margin, Math.min(left, scrollX + viewportWidth - buttonSize - margin));
+    top = Math.max(scrollY + margin, Math.min(top, scrollY + viewportHeight - buttonSize - margin));
+
+    // Apply positioning
+    button.style.left = `${Math.round(left)}px`;
+    button.style.top = `${Math.round(top)}px`;
+
+    console.log('Button positioned at:', {
+      left: Math.round(left),
+      top: Math.round(top),
+      mousePos: { x: position.x, y: position.y },
+      spaces: { right: spaceRight, left: spaceLeft, below: spaceBelow, above: spaceAbove }
+    });
+  }
+
+  /**
+   * Handle translate button click
+   */
+  private handleTranslateButtonClick(textToTranslate: string): void {
+    console.log('Translate button clicked! Text to translate:', textToTranslate);
+
+    // Set interaction flag to prevent button flickering
+    this.isButtonInteraction = true;
+
+    if (!textToTranslate) {
+      console.warn('No text available for translation');
+      this.isButtonInteraction = false;
+      return;
+    }
+
+    // Hide the button
+    this.hideTranslateButton();
+
+    // Show translation tooltip and start translation
+    this.showTranslationTooltip(textToTranslate, this.selectionPosition);
+    this.translateSelectedText(textToTranslate);
+
+    // Reset interaction flag after a delay
+    setTimeout(() => {
+      this.isButtonInteraction = false;
+    }, 500);
+  }
+
+  /**
+   * Handle click outside translate button to hide it
+   */
+  private handleTranslateButtonClickOutside(event: Event): void {
+    const target = event.target as Element;
+
+    // Don't hide if clicking on the button itself
+    if (this.translateButton && this.translateButton.contains(target)) {
+      // Re-add the click outside listener
+      setTimeout(() => {
+        document.addEventListener('click', this.handleTranslateButtonClickOutside.bind(this), { once: true });
+      }, 100);
+      return;
+    }
+
+    // Hide button
+    this.hideTranslateButton();
+  }
+
+  /**
+   * Hide translate button with animation
+   */
+  private hideTranslateButton(): void {
+    if (this.translateButton) {
+      this.translateButton.style.opacity = '0';
+      this.translateButton.style.transform = 'scale(0.8)';
+
+      setTimeout(() => {
+        if (this.translateButton && this.translateButton.parentNode) {
+          this.translateButton.parentNode.removeChild(this.translateButton);
+        }
+        this.translateButton = null;
+      }, 200);
+    }
+  }
+
+  /**
    * Show translation tooltip at specified position
    */
   public showTranslationTooltip(text: string, position: { x: number; y: number; width?: number; height?: number }): void {
@@ -542,6 +769,9 @@ class ContentScript {
   private createTooltipElement(text: string): HTMLElement {
     const tooltip = document.createElement('div');
     tooltip.className = 'chrome-translate-tooltip';
+
+    // Store the original text in the tooltip element
+    tooltip.setAttribute('data-original-text', text);
 
     tooltip.innerHTML = `
       <div class="chrome-translate-tooltip-header">
@@ -746,12 +976,15 @@ class ContentScript {
   public updateTooltipWithResult(translatedText: string): void {
     if (!this.tooltip) return;
 
+    // Get the original text from the tooltip element
+    const originalText = this.tooltip.getAttribute('data-original-text') || '';
+
     const content = this.tooltip.querySelector('.chrome-translate-tooltip-content');
     const actions = this.tooltip.querySelector('.chrome-translate-tooltip-actions');
 
     if (content) {
       content.innerHTML = `
-        <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
+        <div class="chrome-translate-tooltip-original">${this.escapeHtml(originalText)}</div>
         <div class="chrome-translate-tooltip-result">${this.escapeHtml(translatedText)}</div>
       `;
 
@@ -799,12 +1032,15 @@ class ContentScript {
   public updateTooltipWithError(errorMessage: string): void {
     if (!this.tooltip) return;
 
+    // Get the original text from the tooltip element
+    const originalText = this.tooltip.getAttribute('data-original-text') || '';
+
     const content = this.tooltip.querySelector('.chrome-translate-tooltip-content');
     const actions = this.tooltip.querySelector('.chrome-translate-tooltip-actions');
 
     if (content) {
       content.innerHTML = `
-        <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
+        <div class="chrome-translate-tooltip-original">${this.escapeHtml(originalText)}</div>
         <div class="chrome-translate-tooltip-error">⚠️ ${this.escapeHtml(errorMessage)}</div>
       `;
 

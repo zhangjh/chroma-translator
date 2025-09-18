@@ -186,7 +186,7 @@ export class MessageRouter {
     const settings = await this.handleGetSettings();
     const targetLang = data.targetLang || settings.defaultTargetLanguage;
     
-    const result = await this.translationService.translate(data.text, targetLang);
+    const result = await this.translationService.translate(data.text, undefined, targetLang);
     
     // Send result back to content script
     if (sender.tab?.id) {
