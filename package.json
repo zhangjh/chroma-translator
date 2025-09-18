@@ -1,5 +1,5 @@
 {
-    "name": "chromatranslator",
+    "name": "chroma-translator",
     "version": "1.0.0",
     "description": "ChromaTranslator - A Chrome extension that provides colorful translation functionality using Chrome's built-in AI translation API",
     "scripts": {
