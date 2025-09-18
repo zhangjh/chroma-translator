@@ -186,6 +186,91 @@ export class TranslationService {
   }
 
   /**
+   * Translate multiple texts in batch
+   * 批量翻译文本
+   */
+  public async translateBatch(
+    texts: string[],
+    sourceLang: string,
+    targetLang?: string
+  ): Promise<TranslationResult[]> {
+    if (!texts || texts.length === 0) {
+      return [];
+    }
+
+    // Use default target language if not provided
+    const finalTargetLang = targetLang || await this.settingsManager.getDefaultTargetLanguage();
+
+    const isAvailable = await this.isTranslationApiAvailable();
+    if (!isAvailable) {
+      throw this.errorHandler.createError(TranslationErrorType.API_UNAVAILABLE);
+    }
+
+    const results: TranslationResult[] = [];
+
+    try {
+      // Process texts in smaller batches to avoid overwhelming the API
+      const batchSize = 5; // Smaller batch size for Chrome API
+      const batches = [];
+      
+      for (let i = 0; i < texts.length; i += batchSize) {
+        batches.push(texts.slice(i, i + batchSize));
+      }
+
+      for (const batch of batches) {
+        const batchResults = await Promise.all(
+          batch.map(async (text) => {
+            try {
+              // Check cache first
+              const cachedResult = await this.cacheManager.get(text, sourceLang, finalTargetLang);
+              if (cachedResult) {
+                return cachedResult;
+              }
+
+              // Validate text length
+              const validationError = this.errorHandler.validateTextLength(text);
+              if (validationError) {
+                return {
+                  translatedText: text, // Return original text for invalid input
+                  detectedLanguage: sourceLang,
+                  confidence: 0,
+                  status: TranslationStatus.ERROR
+                };
+              }
+
+              // Perform translation
+              const result = await this.translate(text, sourceLang, finalTargetLang);
+              return result;
+
+            } catch (error) {
+              console.error('Batch item translation failed:', error);
+              return {
+                translatedText: text, // Return original text on error
+                detectedLanguage: sourceLang,
+                confidence: 0,
+                status: TranslationStatus.ERROR
+              };
+            }
+          })
+        );
+
+        results.push(...batchResults);
+
+        // Small delay between batches to prevent rate limiting
+        if (batches.length > 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      return results;
+
+    } catch (error) {
+      await this.errorHandler.handleError(error, 'batch_translation');
+      throw error;
+    }
+  }
+
+  /**
    * Get mock supported languages for fallback
    */
   public getSupportedLanguages(): Language[] {

@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "A Chrome extension that provides translation functionality using Chrome's built-in translation API",
     "scripts": {
-        "build-extension": "node build.js",
         "build-dev": "node build.js --dev",
         "build-release": "node build.js --release"
     },

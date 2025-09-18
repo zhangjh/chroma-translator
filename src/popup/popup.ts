@@ -450,18 +450,49 @@ class PopupController {
 
       const targetLang = this.elements.targetLanguage.value;
 
-      // 发送全文翻译消息到content script
-      await chrome.tabs.sendMessage(tab.id, {
+      // Show loading state
+      this.showLoading();
+      this.elements.translatePageBtn.disabled = true;
+      this.elements.translatePageBtn.textContent = '正在启动翻译...';
+
+      // Send full page translation message to content script
+      const response = await chrome.tabs.sendMessage(tab.id, {
         type: MessageType.TRANSLATE_FULL_PAGE,
         data: { targetLang }
       });
 
-      // 关闭popup
-      window.close();
+      if (response && response.success) {
+        // Show success message briefly before closing
+        this.elements.translatePageBtn.textContent = '翻译已启动 ✓';
+        this.elements.translatePageBtn.style.background = 'linear-gradient(135deg, #34a853 0%, #137333 100%)';
+        
+        setTimeout(() => {
+          window.close();
+        }, 1000);
+      } else {
+        throw new Error(response?.error || '启动翻译失败');
+      }
 
     } catch (error) {
       console.error('Full page translation failed:', error);
-      this.showError('全文翻译失败，请确保页面支持翻译');
+      this.hideLoading();
+      this.elements.translatePageBtn.disabled = false;
+      this.elements.translatePageBtn.textContent = this.i18nManager.getTexts().translatePageButton;
+      this.elements.translatePageBtn.style.background = '';
+      
+      // Show user-friendly error message
+      let errorMessage = '全页翻译失败';
+      if (error instanceof Error) {
+        if (error.message.includes('Could not establish connection')) {
+          errorMessage = '页面不支持翻译，请刷新页面后重试';
+        } else if (error.message.includes('api_unavailable')) {
+          errorMessage = '翻译API不可用，请检查Chrome版本';
+        } else {
+          errorMessage = '翻译失败，请重试';
+        }
+      }
+      
+      this.showError(errorMessage);
     }
   }
 

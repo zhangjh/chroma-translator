@@ -27,14 +27,14 @@ export class MessageRouter {
    */
   private initializeHandlers(): void {
     // Translation handlers
-    this.messageHandlers.set(MessageType.TRANSLATE_TEXT, this.handleTranslateText.bind(this));
-    this.messageHandlers.set(MessageType.TRANSLATE_BATCH, this.handleTranslateBatch.bind(this));
-    this.messageHandlers.set(MessageType.DETECT_LANGUAGE, this.handleDetectLanguage.bind(this));
-    this.messageHandlers.set(MessageType.GET_SUPPORTED_LANGUAGES, this.handleGetSupportedLanguages.bind(this));
+    this.messageHandlers.set(MessageType.TRANSLATE_TEXT, (data, _sender) => this.handleTranslateText(data));
+    this.messageHandlers.set(MessageType.TRANSLATE_BATCH, (data, sender) => this.handleTranslateBatch(data, sender));
+    this.messageHandlers.set(MessageType.DETECT_LANGUAGE, (data, _sender) => this.handleDetectLanguage(data));
+    this.messageHandlers.set(MessageType.GET_SUPPORTED_LANGUAGES, (_data, _sender) => this.handleGetSupportedLanguages());
     
     // Settings handlers
-    this.messageHandlers.set(MessageType.GET_SETTINGS, this.handleGetSettings.bind(this));
-    this.messageHandlers.set(MessageType.SAVE_SETTINGS, this.handleSaveSettings.bind(this));
+    this.messageHandlers.set(MessageType.GET_SETTINGS, (_data, _sender) => this.handleGetSettings());
+    this.messageHandlers.set(MessageType.SAVE_SETTINGS, (data, _sender) => this.handleSaveSettings(data));
     
     // Content script handlers
     this.messageHandlers.set(MessageType.TRANSLATE_SELECTED, this.handleTranslateSelected.bind(this));
@@ -111,14 +111,15 @@ export class MessageRouter {
     sourceLang: string;
     targetLang: string;
     tabId?: number;
-  }): Promise<any> {
-    const { texts, sourceLang, targetLang, tabId } = data;
+  }, sender?: chrome.runtime.MessageSender): Promise<any> {
+    const { texts, sourceLang, targetLang } = data;
+    const tabId = data.tabId || sender?.tab?.id;
     
     // Create progress callback to send updates to content script
     const onProgress = tabId ? (progress: any) => {
       chrome.tabs.sendMessage(tabId, {
         type: MessageType.UPDATE_PROGRESS,
-        data: progress
+        data: { progress }
       }).catch(error => {
         console.error('Failed to send progress update:', error);
       });
@@ -206,20 +207,26 @@ export class MessageRouter {
    * Handle full page translation request
    */
   private async handleTranslateFullPage(data: {
-    texts: string[];
     targetLang?: string;
   }, sender: chrome.runtime.MessageSender): Promise<any> {
     const settings = await this.handleGetSettings();
     const targetLang = data.targetLang || settings.defaultTargetLanguage;
     
-    // Use batch translation for full page
-    const tabId = sender.tab?.id;
-    return await this.handleTranslateBatch({
-      texts: data.texts,
-      sourceLang: 'auto',
-      targetLang,
-      ...(tabId && { tabId })
-    });
+    // Send message to content script to start full page translation
+    if (sender.tab?.id) {
+      try {
+        await chrome.tabs.sendMessage(sender.tab.id, {
+          type: MessageType.TRANSLATE_FULL_PAGE,
+          data: { targetLang }
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to send full page translation message:', error);
+        throw new Error('Failed to start full page translation');
+      }
+    } else {
+      throw new Error('No active tab found');
+    }
   }
 
   /**

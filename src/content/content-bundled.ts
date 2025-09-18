@@ -87,7 +87,6 @@ const CSS_CLASSES = {
   TRANSLATED_ELEMENT: 'chrome-translated-element',
   TRANSLATING_ELEMENT: 'chrome-translating-element',
   LOADING_STATE: 'chrome-translation-loading',
-  ERROR_STATE: 'chrome-translation-error'
 };
 
 /**
@@ -157,7 +156,7 @@ class ContentScript {
   /**
    * Setup message listener for background script communication
    */
-  private setupMessageListener(): void { 
+  private setupMessageListener(): void {
     chrome.runtime.onMessage.addListener(
       (message: Message, _sender: chrome.runtime.MessageSender, sendResponse: (response: MessageResponse) => void) => {
         this.handleMessage(message)
@@ -176,7 +175,7 @@ class ContentScript {
               requestId: message.requestId || ''
             });
           });
-        
+
         return true; // Indicate async response
       }
     );
@@ -186,28 +185,41 @@ class ContentScript {
    * Handle messages from background script
    */
   private async handleMessage(message: Message): Promise<any> {
-    switch (message.type as string) {
-      case 'TRANSLATION_RESULT':
-        this.handleTranslationResult(message.data);
-        break;
-      case 'TRANSLATION_ERROR':
-        this.handleTranslationError(message.data);
-        break;
-      case 'TRANSLATE_FULL_PAGE':
-        if (message.data?.action === 'start') {
-          await this.translateFullPage();
-        }
-        break;
-      case 'RESTORE_ORIGINAL':
+    switch (message.type) {
+      case MessageType.TRANSLATE_FULL_PAGE:
+        const targetLang = message.data?.targetLang;
+        await this.translateFullPage(targetLang);
+        return { success: true };
+
+      case MessageType.RESTORE_ORIGINAL:
         this.restoreOriginalPage();
-        break;
-      case 'UPDATE_PROGRESS':
+        return { success: true };
+
+      case MessageType.UPDATE_PROGRESS:
         if (message.data?.progress) {
           this.showFullPageProgress(message.data.progress);
         }
-        break;
+        return { success: true };
+
       default:
-        console.warn('Unknown message type:', message.type);
+        // Handle string-based message types for backward compatibility
+        const messageTypeStr = message.type as string;
+        switch (messageTypeStr) {
+          case 'GET_SELECTED_TEXT':
+            return { text: this.selectedText };
+
+          case 'TRANSLATION_RESULT':
+            this.handleTranslationResult(message.data);
+            return { success: true };
+
+          case 'TRANSLATION_ERROR':
+            this.handleTranslationError(message.data);
+            return { success: true };
+
+          default:
+            console.warn('Unknown message type:', message.type);
+            return { success: false, error: 'Unknown message type' };
+        }
     }
   }
 
@@ -217,7 +229,7 @@ class ContentScript {
   private setupTextSelectionDetection(): void {
     // Listen for mouseup events to detect text selection
     document.addEventListener('mouseup', this.handleMouseUp.bind(this));
-    
+
     // Listen for selection change events
     document.addEventListener('selectionchange', this.handleSelectionChange.bind(this));
   }
@@ -229,7 +241,7 @@ class ContentScript {
     // Small delay to ensure selection is complete
     console.log("mouseUp");
     console.log(this.selectedText);
-    
+
     this.processTextSelection(event.clientX, event.clientY);
   }
 
@@ -250,13 +262,13 @@ class ContentScript {
    */
   private processTextSelection(x: number, y: number): void {
     const selection = window.getSelection();
-    if(selection) {
+    if (selection) {
       this.selectedText = selection.toString().trim();
     }
-    if(!this.selectedText) {
+    if (!this.selectedText) {
       return;
     }
-    
+
     // Get the actual selection bounds instead of just mouse position
     const selectionBounds = this.getSelectionBounds(selection);
     if (selectionBounds) {
@@ -265,16 +277,16 @@ class ContentScript {
       // Fallback to mouse position
       this.selectionPosition = { x, y };
     }
-       
+
     console.log('text selection detected:', {
       text: this.selectedText,
       position: this.selectionPosition,
       length: this.selectedText.length
     });
-      
+
     // Show translation tooltip and start translation
     this.showTranslationTooltip(this.selectedText, this.selectionPosition);
-    this.translateSelectedText(this.selectedText); 
+    this.translateSelectedText(this.selectedText);
   }
 
   /**
@@ -288,7 +300,7 @@ class ContentScript {
     try {
       const range = selection.getRangeAt(0);
       const rects = range.getClientRects();
-      
+
       if (rects.length === 0) {
         // Fallback to range bounding rect
         const rect = range.getBoundingClientRect();
@@ -306,13 +318,13 @@ class ContentScript {
       // For multi-line selections, use the first line for positioning
       const firstRect = rects[0];
       const lastRect = rects[rects.length - 1];
-      
+
       // Calculate the overall bounds
       const left = Math.min(firstRect.left, lastRect.left);
       const right = Math.max(firstRect.right, lastRect.right);
       const top = firstRect.top;
       const bottom = lastRect.bottom;
-      
+
       return {
         x: left + (right - left) / 2, // Center horizontally
         y: top, // Use top of first line
@@ -334,13 +346,13 @@ class ContentScript {
 
     // Create tooltip element
     this.tooltip = this.createTooltipElement(text);
-    
+
     // Add tooltip to document
     document.body.appendChild(this.tooltip);
-    
+
     // Position tooltip
     this.positionTooltip(position);
-    
+
     // Show tooltip with animation
     setTimeout(() => {
       if (this.tooltip) {
@@ -360,7 +372,7 @@ class ContentScript {
   private createTooltipElement(text: string): HTMLElement {
     const tooltip = document.createElement('div');
     tooltip.className = 'chrome-translate-tooltip';
-    
+
     tooltip.innerHTML = `
       <div class="chrome-translate-tooltip-header">
         <span class="chrome-translate-tooltip-title">翻译</span>
@@ -467,7 +479,7 @@ class ContentScript {
     // Calculate horizontal position for above/below placements
     if (placement === 'above' || placement === 'below') {
       left = position.x - tooltipWidth / 2;
-      
+
       // Adjust horizontal position if tooltip goes outside viewport
       if (left < scrollX + margin) {
         left = scrollX + margin;
@@ -519,19 +531,24 @@ class ContentScript {
    * Hide tooltip with animation
    */
   private hideTooltip(): void {
-    if (this.tooltip && this.tooltip.parentNode) {
-      // Add fade-out animation
-      this.tooltip.style.opacity = '0';
-      this.tooltip.style.transform = 'translateY(-8px) scale(0.95)';
-      
-      // Remove after animation completes
-      setTimeout(() => {
-        if (this.tooltip && this.tooltip.parentNode) {
-          this.tooltip.parentNode.removeChild(this.tooltip);
-          this.tooltip = null;
-        }
-      }, 250);
-    }
+    // Remove all existing tooltip elements
+    const existingTooltips = document.querySelectorAll('.chrome-translate-tooltip');
+    existingTooltips.forEach(tooltip => {
+      if (tooltip.parentNode) {
+        // Add fade-out animation
+        (tooltip as HTMLElement).style.opacity = '0';
+        (tooltip as HTMLElement).style.transform = 'translateY(-8px) scale(0.95)';
+        // Remove after animation completes
+        setTimeout(() => {
+          if (tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip);
+          }
+        }, 250);
+      }
+    });
+
+    // Clear the current tooltip reference
+    this.tooltip = null;
   }
 
   /**
@@ -539,7 +556,7 @@ class ContentScript {
    */
   private handleClickOutside(event: Event): void {
     const target = event.target as Element;
-    
+
     // Don't hide if clicking on the tooltip itself
     if (this.tooltip && this.tooltip.contains(target)) {
       // Re-add the click outside listener
@@ -561,7 +578,7 @@ class ContentScript {
 
     const content = this.tooltip.querySelector('.chrome-translate-tooltip-content');
     const actions = this.tooltip.querySelector('.chrome-translate-tooltip-actions');
-    
+
     if (content) {
       content.innerHTML = `
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
@@ -614,11 +631,11 @@ class ContentScript {
 
     const content = this.tooltip.querySelector('.chrome-translate-tooltip-content');
     const actions = this.tooltip.querySelector('.chrome-translate-tooltip-actions');
-    
+
     if (content) {
       content.innerHTML = `
         <div class="chrome-translate-tooltip-original">${this.escapeHtml(this.selectedText)}</div>
-        <div class="chrome-translate-tooltip-error">${this.escapeHtml(errorMessage)}</div>
+        <div class="chrome-translate-tooltip-error">⚠️ ${this.escapeHtml(errorMessage)}</div>
       `;
 
       // Add scroll detection for visual feedback
@@ -629,20 +646,17 @@ class ContentScript {
 
     if (actions) {
       actions.innerHTML = `
-        <button class="chrome-translate-tooltip-button close-button" title="关闭">关闭</button>
+        <button class="chrome-translate-tooltip-button secondary" title="关闭">关闭</button>
       `;
 
       // Add close button event listener
-      const closeButton = actions.querySelector('.close-button');
+      const closeButton = actions.querySelector('.chrome-translate-tooltip-button.secondary');
       if (closeButton) {
         closeButton.addEventListener('click', () => {
           this.hideTooltip();
         });
       }
     }
-
-    // Add error styling
-    this.tooltip.classList.add(CSS_CLASSES.ERROR_STATE);
 
     // Re-position tooltip after content update
     this.scheduleRepositioning();
@@ -661,7 +675,7 @@ class ContentScript {
       };
 
       const response = await this.sendMessageToBackground(message);
-      
+
       if (response.success && response.data) {
         this.handleTranslationResult(response.data);
       } else {
@@ -776,7 +790,7 @@ class ContentScript {
     if (this.repositionTimeout) {
       clearTimeout(this.repositionTimeout);
     }
-    
+
     this.repositionTimeout = window.setTimeout(() => {
       if (this.tooltip) {
         this.positionTooltip(this.selectionPosition);
@@ -799,7 +813,7 @@ class ContentScript {
     [originalElement, resultElement, errorElement].forEach(element => {
       if (element) {
         this.checkScrollable(element);
-        
+
         // Add scroll event listener to update fade effect
         element.addEventListener('scroll', () => {
           this.updateScrollFade(element);
@@ -825,7 +839,7 @@ class ContentScript {
    */
   private updateScrollFade(element: HTMLElement): void {
     const isScrolledToBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 2;
-    
+
     if (isScrolledToBottom) {
       element.classList.remove('has-scroll');
     } else {
@@ -843,30 +857,685 @@ class ContentScript {
   }
 
   // ========== Full Page Translation Methods ==========
-  // (Simplified version for bundled script)
+
+  private translatableElements: TranslatableElement[] = [];
+  private originalTexts: Map<string, string> = new Map();
+  private progressOverlay: HTMLElement | null = null;
+  private isTranslating: boolean = false;
+  private currentTargetLanguage: string = 'en';
 
   /**
    * Translate full page
    */
-  public async translateFullPage(): Promise<void> {
-    console.log('Full page translation not implemented in bundled version');
-    // This would be implemented similar to the original but simplified
+  public async translateFullPage(targetLang?: string): Promise<void> {
+    if (this.isTranslating) {
+      console.log('Translation already in progress');
+      return;
+    }
+
+    try {
+      this.isTranslating = true;
+      this.currentTargetLanguage = targetLang || 'en';
+
+      // Find all translatable elements
+      this.findTranslatableElements();
+
+      if (this.translatableElements.length === 0) {
+        console.log('No translatable elements found');
+        return;
+      }
+
+      // Show progress overlay
+      this.showProgressOverlay();
+
+      // Translate elements in batches
+      await this.translateElementsBatch();
+
+      // Hide progress overlay
+      this.hideProgressOverlay();
+
+      console.log(`Full page translation completed: ${this.translatableElements.length} elements translated`);
+
+    } catch (error) {
+      console.error('Full page translation failed:', error);
+      this.hideProgressOverlay();
+      this.showTranslationError('全页翻译失败，请重试');
+    } finally {
+      this.isTranslating = false;
+    }
+  }
+
+  /**
+   * Find all translatable elements on the page
+   */
+  private findTranslatableElements(): void {
+    this.translatableElements = [];
+    this.originalTexts.clear();
+
+    // Define selectors for translatable elements
+    const selectors = [
+      'h1, h2, h3, h4, h5, h6',           // Headings
+      'p',                                 // Paragraphs
+      'li',                               // List items
+      'a[href]:not([href^="javascript:"])', // Links (excluding javascript links)
+      'button:not([aria-hidden="true"])',  // Buttons
+      'label',                            // Labels
+      'span:not([class*="icon"]):not([aria-hidden="true"])', // Spans (excluding icons)
+      'div:not([class*="icon"]):not([aria-hidden="true"])',  // Divs (excluding icons)
+      '[title]',                          // Elements with title attributes
+      '[placeholder]',                    // Elements with placeholder attributes
+      '[alt]'                            // Elements with alt attributes
+    ];
+
+    const elements = document.querySelectorAll(selectors.join(', '));
+
+    elements.forEach((element, index) => {
+      const htmlElement = element as HTMLElement;
+
+      // Skip if element is not visible or has no meaningful text
+      if (!this.isElementTranslatable(htmlElement)) {
+        return;
+      }
+
+      const text = this.extractTextContent(htmlElement);
+      if (!text || text.length < 2) {
+        return;
+      }
+
+      // Skip if text is too long for single translation
+      if (text.length > CONFIG.MAX_TEXT_LENGTH) {
+        return;
+      }
+
+      const elementId = `translatable-${index}-${Date.now()}`;
+      htmlElement.setAttribute('data-translation-id', elementId);
+
+      const translatableElement: TranslatableElement = {
+        element: htmlElement,
+        originalText: text,
+        priority: this.getElementPriority(htmlElement),
+        elementId,
+        tagName: htmlElement.tagName.toLowerCase(),
+        isVisible: this.isElementVisible(htmlElement)
+      };
+
+      this.translatableElements.push(translatableElement);
+      this.originalTexts.set(elementId, text);
+    });
+
+    // Sort by priority (higher priority first)
+    this.translatableElements.sort((a, b) => a.priority - b.priority);
+
+    console.log(`Found ${this.translatableElements.length} translatable elements`);
+  }
+
+  /**
+   * Check if element is translatable
+   */
+  private isElementTranslatable(element: HTMLElement): boolean {
+    // Skip hidden elements
+    if (element.style.display === 'none' || element.style.visibility === 'hidden') {
+      return false;
+    }
+
+    // Skip elements that are likely decorative
+    if (element.getAttribute('aria-hidden') === 'true') {
+      return false;
+    }
+
+    // Skip script and style elements
+    if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(element.tagName)) {
+      return false;
+    }
+
+    // Skip elements that are likely icons or decorative
+    const className = element.className.toLowerCase();
+    if (className.includes('icon') || className.includes('svg') || className.includes('emoji')) {
+      return false;
+    }
+
+    // Skip elements already translated
+    if (element.hasAttribute('data-translation-id')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Extract meaningful text content from element
+   */
+  private extractTextContent(element: HTMLElement): string {
+    let text = '';
+
+    // Handle different element types
+    switch (element.tagName.toLowerCase()) {
+      case 'input':
+        const input = element as HTMLInputElement;
+        text = input.placeholder || input.value || input.title || '';
+        break;
+      case 'textarea':
+        const textarea = element as HTMLTextAreaElement;
+        text = textarea.placeholder || textarea.value || '';
+        break;
+      case 'img':
+        const img = element as HTMLImageElement;
+        text = img.alt || img.title || '';
+        break;
+      default:
+        // Get direct text content, excluding nested elements
+        text = this.getDirectTextContent(element);
+
+        // Fallback to title or other attributes
+        if (!text) {
+          text = element.title || element.getAttribute('aria-label') || '';
+        }
+        break;
+    }
+
+    return text.trim();
+  }
+
+  /**
+   * Get direct text content of element (excluding nested elements)
+   */
+  private getDirectTextContent(element: HTMLElement): string {
+    let text = '';
+
+    for (let i = 0; i < element.childNodes.length; i++) {
+      const node = element.childNodes[i];
+      if (node.nodeType === Node.TEXT_NODE) {
+        text += node.textContent || '';
+      }
+    }
+
+    return text.trim();
+  }
+
+  /**
+   * Get element priority for translation ordering
+   */
+  private getElementPriority(element: HTMLElement): number {
+    const tagName = element.tagName.toLowerCase();
+
+    switch (tagName) {
+      case 'title':
+      case 'h1':
+        return ElementPriority.TITLE;
+      case 'h2':
+      case 'h3':
+      case 'h4':
+      case 'h5':
+      case 'h6':
+        return ElementPriority.HEADING;
+      case 'p':
+      case 'div':
+        return ElementPriority.PARAGRAPH;
+      case 'li':
+      case 'ul':
+      case 'ol':
+        return ElementPriority.LIST;
+      case 'a':
+        return ElementPriority.LINK;
+      case 'button':
+      case 'input':
+        return ElementPriority.BUTTON;
+      case 'label':
+      case 'span':
+      case 'small':
+        return ElementPriority.LABEL;
+      default:
+        return ElementPriority.OTHER;
+    }
+  }
+
+  /**
+   * Check if element is visible in viewport
+   */
+  private isElementVisible(element: HTMLElement): boolean {
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 &&
+      rect.top < window.innerHeight && rect.bottom > 0;
+  }
+
+  /**
+   * Translate elements in batches
+   */
+  private async translateElementsBatch(): Promise<void> {
+    const batchSize = CONFIG.MAX_BATCH_SIZE;
+    const totalBatches = Math.ceil(this.translatableElements.length / batchSize);
+
+    for (let i = 0; i < totalBatches; i++) {
+      const startIndex = i * batchSize;
+      const endIndex = Math.min(startIndex + batchSize, this.translatableElements.length);
+      const batch = this.translatableElements.slice(startIndex, endIndex);
+
+      // Update progress
+      const progress: TranslationProgress = {
+        totalElements: this.translatableElements.length,
+        translatedElements: startIndex,
+        currentElement: `批次 ${i + 1}/${totalBatches}`,
+        percentage: Math.round((startIndex / this.translatableElements.length) * 100)
+      };
+      this.updateProgressDisplay(progress);
+
+      // Translate batch
+      await this.translateBatch(batch);
+
+      // Small delay between batches to prevent overwhelming the API
+      if (i < totalBatches - 1) {
+        await this.delay(100);
+      }
+    }
+
+    // Final progress update
+    const finalProgress: TranslationProgress = {
+      totalElements: this.translatableElements.length,
+      translatedElements: this.translatableElements.length,
+      currentElement: '翻译完成',
+      percentage: 100
+    };
+    this.updateProgressDisplay(finalProgress);
+  }
+
+  /**
+   * Translate a batch of elements
+   */
+  private async translateBatch(batch: TranslatableElement[]): Promise<void> {
+    const texts = batch.map(item => item.originalText);
+
+    try {
+      // Send batch translation request to background script
+      const message: Message = {
+        type: MessageType.TRANSLATE_BATCH,
+        data: {
+          texts,
+          sourceLang: 'auto',
+          targetLang: this.currentTargetLanguage
+        },
+        requestId: this.generateRequestId()
+      };
+
+      const response = await this.sendMessageToBackground(message);
+
+      if (response.success && response.data) {
+        const results = response.data as any[];
+
+        // Apply translations to elements
+        batch.forEach((item, index) => {
+          if (results[index] && results[index].translatedText) {
+            this.applyTranslationToElement(item, results[index].translatedText);
+          }
+        });
+      } else {
+        console.error('Batch translation failed:', response.error);        
+      }
+    } catch (error) {
+      console.error('Batch translation error:', error);
+    }
+  }
+
+  /**
+   * Apply translation to a specific element
+   */
+  private applyTranslationToElement(item: TranslatableElement, translatedText: string): void {
+    const { element, originalText } = item;
+
+    try {
+      // Store original text if not already stored
+      if (!this.originalTexts.has(item.elementId)) {
+        this.originalTexts.set(item.elementId, originalText);
+      }
+
+      // Apply translation based on element type
+      switch (element.tagName.toLowerCase()) {
+        case 'input':
+          const input = element as HTMLInputElement;
+          if (input.placeholder === originalText) {
+            input.placeholder = translatedText;
+          } else if (input.value === originalText) {
+            input.value = translatedText;
+          } else if (input.title === originalText) {
+            input.title = translatedText;
+          }
+          break;
+
+        case 'textarea':
+          const textarea = element as HTMLTextAreaElement;
+          if (textarea.placeholder === originalText) {
+            textarea.placeholder = translatedText;
+          } else if (textarea.value === originalText) {
+            textarea.value = translatedText;
+          }
+          break;
+
+        case 'img':
+          const img = element as HTMLImageElement;
+          if (img.alt === originalText) {
+            img.alt = translatedText;
+          } else if (img.title === originalText) {
+            img.title = translatedText;
+          }
+          break;
+
+        default:
+          // For text content elements, replace the direct text content
+          this.replaceTextContent(element, originalText, translatedText);
+          break;
+      }
+
+      // Mark element as translated
+      element.classList.add(CSS_CLASSES.TRANSLATED_ELEMENT);
+      element.setAttribute('data-original-text', originalText);
+      element.setAttribute('data-translated-text', translatedText);
+
+    } catch (error) {
+      console.error('Failed to apply translation to element:', error);
+    }
+  }
+
+  /**
+   * Replace text content in element while preserving structure
+   */
+  private replaceTextContent(element: HTMLElement, originalText: string, translatedText: string): void {
+    // Find and replace text nodes that match the original text
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    const textNodes: Text[] = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node as Text);
+    }
+
+    // Replace text in matching nodes
+    let remainingOriginal = originalText;
+    let remainingTranslated = translatedText;
+
+    for (const textNode of textNodes) {
+      const nodeText = textNode.textContent || '';
+
+      if (remainingOriginal.includes(nodeText.trim()) && nodeText.trim()) {
+        // Calculate the portion of translation for this node
+        const ratio = nodeText.trim().length / originalText.length;
+        const translatedPortion = translatedText.substring(0, Math.ceil(translatedText.length * ratio));
+
+        textNode.textContent = translatedPortion;
+
+        // Update remaining text
+        remainingTranslated = remainingTranslated.substring(translatedPortion.length);
+        remainingOriginal = remainingOriginal.replace(nodeText.trim(), '');
+      }
+    }
+
+    // If there's a single text node, replace it entirely
+    if (textNodes.length === 1 && textNodes[0].textContent?.trim() === originalText) {
+      textNodes[0].textContent = translatedText;
+    }
   }
 
   /**
    * Restore original page content
    */
   public restoreOriginalPage(): void {
-    console.log('Restore original page not implemented in bundled version');
-    // This would be implemented similar to the original but simplified
+    console.log('Restoring original page content');
+
+    // Restore all translated elements
+    this.translatableElements.forEach(item => {
+      const { element, elementId } = item;
+      const originalText = this.originalTexts.get(elementId);
+
+      if (originalText) {
+        try {
+          // Restore based on element type
+          switch (element.tagName.toLowerCase()) {
+            case 'input':
+              const input = element as HTMLInputElement;
+              const translatedText = element.getAttribute('data-translated-text');
+              if (input.placeholder === translatedText) {
+                input.placeholder = originalText;
+              } else if (input.value === translatedText) {
+                input.value = originalText;
+              } else if (input.title === translatedText) {
+                input.title = originalText;
+              }
+              break;
+
+            case 'textarea':
+              const textarea = element as HTMLTextAreaElement;
+              const textareaTranslated = element.getAttribute('data-translated-text');
+              if (textarea.placeholder === textareaTranslated) {
+                textarea.placeholder = originalText;
+              } else if (textarea.value === textareaTranslated) {
+                textarea.value = originalText;
+              }
+              break;
+
+            case 'img':
+              const img = element as HTMLImageElement;
+              const imgTranslated = element.getAttribute('data-translated-text');
+              if (img.alt === imgTranslated) {
+                img.alt = originalText;
+              } else if (img.title === imgTranslated) {
+                img.title = originalText;
+              }
+              break;
+
+            default:
+              // Restore text content
+              this.restoreTextContent(element, originalText);
+              break;
+          }
+
+          // Remove translation markers
+          element.classList.remove(CSS_CLASSES.TRANSLATED_ELEMENT);
+          element.removeAttribute('data-original-text');
+          element.removeAttribute('data-translated-text');
+          element.removeAttribute('data-translation-id');
+
+        } catch (error) {
+          console.error('Failed to restore element:', error);
+        }
+      }
+    });
+
+    // Clear data
+    this.translatableElements = [];
+    this.originalTexts.clear();
+    this.isTranslating = false;
+
+    console.log('Original page content restored');
+  }
+
+  /**
+   * Restore text content of element
+   */
+  private restoreTextContent(element: HTMLElement, originalText: string): void {
+    // Simple approach: if the element has only text content, replace it
+    const currentText = this.getDirectTextContent(element);
+    const translatedText = element.getAttribute('data-translated-text');
+
+    if (currentText === translatedText || element.textContent?.trim() === translatedText) {
+      // Find text nodes and restore
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      const textNodes: Text[] = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node as Text);
+      }
+
+      if (textNodes.length === 1) {
+        textNodes[0].textContent = originalText;
+      } else {
+        // For complex structures, replace the entire text content
+        element.textContent = originalText;
+      }
+    }
+  }
+
+  /**
+   * Show progress overlay
+   */
+  private showProgressOverlay(): void {
+    this.hideProgressOverlay(); // Remove any existing overlay
+
+    this.progressOverlay = document.createElement('div');
+    this.progressOverlay.className = 'chrome-translation-progress-overlay';
+    this.progressOverlay.innerHTML = `
+      <div class="chrome-translation-progress-modal">
+        <div class="chrome-translation-progress-header">
+          <h3>正在翻译页面</h3>
+          <button class="chrome-translation-progress-close" title="取消翻译">×</button>
+        </div>
+        <div class="chrome-translation-progress-content">
+          <div class="chrome-translation-progress-bar">
+            <div class="chrome-translation-progress-fill"></div>
+          </div>
+          <div class="chrome-translation-progress-text">准备中...</div>
+          <div class="chrome-translation-progress-stats">
+            <span class="chrome-translation-progress-current">0</span> / 
+            <span class="chrome-translation-progress-total">0</span> 元素
+          </div>
+        </div>
+        <div class="chrome-translation-progress-actions">
+          <button class="chrome-translation-progress-cancel">取消翻译</button>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners
+    const closeBtn = this.progressOverlay.querySelector('.chrome-translation-progress-close');
+    const cancelBtn = this.progressOverlay.querySelector('.chrome-translation-progress-cancel');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.cancelTranslation();
+      });
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.cancelTranslation();
+      });
+    }
+
+    document.body.appendChild(this.progressOverlay);
+
+    // Show with animation
+    setTimeout(() => {
+      if (this.progressOverlay) {
+        this.progressOverlay.classList.add('visible');
+      }
+    }, 10);
+  }
+
+  /**
+   * Hide progress overlay
+   */
+  private hideProgressOverlay(): void {
+    if (this.progressOverlay) {
+      this.progressOverlay.classList.remove('visible');
+      setTimeout(() => {
+        if (this.progressOverlay && this.progressOverlay.parentNode) {
+          this.progressOverlay.parentNode.removeChild(this.progressOverlay);
+          this.progressOverlay = null;
+        }
+      }, 300);
+    }
+  }
+
+  /**
+   * Update progress display
+   */
+  private updateProgressDisplay(progress: TranslationProgress): void {
+    if (!this.progressOverlay) return;
+
+    const progressFill = this.progressOverlay.querySelector('.chrome-translation-progress-fill') as HTMLElement;
+    const progressText = this.progressOverlay.querySelector('.chrome-translation-progress-text') as HTMLElement;
+    const currentSpan = this.progressOverlay.querySelector('.chrome-translation-progress-current') as HTMLElement;
+    const totalSpan = this.progressOverlay.querySelector('.chrome-translation-progress-total') as HTMLElement;
+
+    if (progressFill) {
+      progressFill.style.width = `${progress.percentage}%`;
+    }
+
+    if (progressText) {
+      progressText.textContent = progress.currentElement;
+    }
+
+    if (currentSpan) {
+      currentSpan.textContent = progress.translatedElements.toString();
+    }
+
+    if (totalSpan) {
+      totalSpan.textContent = progress.totalElements.toString();
+    }
+  }
+
+  /**
+   * Cancel ongoing translation
+   */
+  private cancelTranslation(): void {
+    this.isTranslating = false;
+    this.hideProgressOverlay();
+    console.log('Translation cancelled by user');
   }
 
   /**
    * Show full page translation progress
    */
   public showFullPageProgress(progress: TranslationProgress): void {
-    console.log('Progress display not implemented in bundled version', progress);
-    // This would be implemented similar to the original but simplified
+    this.updateProgressDisplay(progress);
+  }
+
+  /**
+   * Show translation error
+   */
+  private showTranslationError(message: string): void {
+    // Create error notification
+    const errorNotification = document.createElement('div');
+    errorNotification.className = 'chrome-translation-error-notification';
+    errorNotification.innerHTML = `
+      <div class="chrome-translation-error-content">
+        <span class="chrome-translation-error-icon">⚠️</span>
+        <span class="chrome-translation-error-message">${this.escapeHtml(message)}</span>
+        <button class="chrome-translation-error-close">×</button>
+      </div>
+    `;
+
+    // Add close functionality
+    const closeBtn = errorNotification.querySelector('.chrome-translation-error-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (errorNotification.parentNode) {
+          errorNotification.parentNode.removeChild(errorNotification);
+        }
+      });
+    }
+
+    document.body.appendChild(errorNotification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (errorNotification.parentNode) {
+        errorNotification.parentNode.removeChild(errorNotification);
+      }
+    }, 5000);
+  }
+
+  /**
+   * Utility function to add delay
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

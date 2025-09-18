@@ -134,7 +134,7 @@
   color: #5f6368;
   font-size: 13px;
   margin-bottom: 12px;
-  padding: 12px 16px;
+  padding: 16px;
   background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -368,14 +368,16 @@
 
 .chrome-translate-tooltip-error {
   color: #d93025;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   padding: 16px;
-  background: linear-gradient(135deg, #fce8e6 0%, #fef7f0 100%);
+  background: linear-gradient(135deg, #fef7f0 0%, #fce8e6 100%);
   border-radius: 8px;
-  border: 1px solid rgba(217, 48, 37, 0.12);
+  border: 1px solid rgba(217, 48, 37, 0.15);
   position: relative;
-  line-height: 1.4;
-  max-height: 100px;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(217, 48, 37, 0.08);
+  max-height: 120px;
   overflow-y: auto;
   overflow-x: hidden;
   word-wrap: break-word;
@@ -785,9 +787,10 @@
   }
   
   .chrome-translate-tooltip-error {
-    background: linear-gradient(135deg, #3d1a1a 0%, #2d1212 100%);
+    background: linear-gradient(135deg, #2d1212 0%, #3d1a1a 100%);
     color: #f28b82;
-    border-color: rgba(242, 139, 130, 0.2);
+    border-color: rgba(242, 139, 130, 0.15);
+    box-shadow: 0 1px 3px rgba(242, 139, 130, 0.08);
   }
   
   .chrome-translate-tooltip-error::before {
@@ -919,5 +922,496 @@
   .chrome-translate-current {
     outline-color: #4285f4 !important;
     background-color: rgba(66, 133, 244, 0.2) !important;
+  }
+}
+/* 
+Full Page Translation Progress Overlay */
+.chrome-translation-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.chrome-translation-progress-overlay.visible {
+  opacity: 1;
+}
+
+.chrome-translation-progress-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  min-width: 400px;
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chrome-translation-progress-overlay.visible .chrome-translation-progress-modal {
+  transform: scale(1);
+}
+
+.chrome-translation-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.chrome-translation-progress-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a73e8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chrome-translation-progress-header h3::before {
+  content: '🌐';
+  font-size: 20px;
+}
+
+.chrome-translation-progress-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chrome-translation-progress-close:hover {
+  background-color: rgba(95, 99, 104, 0.1);
+  color: #202124;
+  transform: scale(1.1);
+}
+
+.chrome-translation-progress-content {
+  padding: 24px;
+}
+
+.chrome-translation-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.chrome-translation-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a73e8, #4285f4, #34a853);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+  animation: chrome-translation-progress-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes chrome-translation-progress-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.chrome-translation-progress-text {
+  font-size: 14px;
+  color: #202124;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.chrome-translation-progress-stats {
+  font-size: 13px;
+  color: #5f6368;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chrome-translation-progress-current {
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+.chrome-translation-progress-total {
+  font-weight: 600;
+  color: #5f6368;
+}
+
+.chrome-translation-progress-actions {
+  padding: 16px 24px 24px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.chrome-translation-progress-cancel {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #5f6368;
+  border: 1px solid rgba(95, 99, 104, 0.2);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chrome-translation-progress-cancel:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  border-color: #5f6368;
+  color: #202124;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chrome-translation-progress-cancel:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Error Notification */
+.chrome-translation-error-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  max-width: 400px;
+  min-width: 300px;
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: chrome-translation-error-slide-in 0.3s ease-out forwards;
+}
+
+@keyframes chrome-translation-error-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.chrome-translation-error-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fce8e6 0%, #fef7f0 100%);
+  border: 1px solid rgba(217, 48, 37, 0.12);
+  border-radius: 12px;
+  position: relative;
+}
+
+.chrome-translation-error-content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ea4335 0%, #d93025 100%);
+  border-radius: 12px 0 0 12px;
+}
+
+.chrome-translation-error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.chrome-translation-error-message {
+  flex: 1;
+  font-size: 14px;
+  color: #d93025;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.chrome-translation-error-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #d93025;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.chrome-translation-error-close:hover {
+  background-color: rgba(217, 48, 37, 0.1);
+  transform: scale(1.1);
+}
+
+.chrome-translation-error-close:active {
+  transform: scale(0.95);
+}
+
+/* Element State Classes */
+.chrome-translated-element {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.chrome-translated-element::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid rgba(52, 168, 83, 0.3);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.chrome-translated-element:hover::after {
+  opacity: 1;
+}
+
+.chrome-translating-element {
+  position: relative;
+  background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: chrome-translating-shimmer 1.5s infinite;
+}
+
+@keyframes chrome-translating-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.chrome-translation-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.chrome-translation-error {
+  background-color: rgba(217, 48, 37, 0.1) !important;
+  border-left: 3px solid #d93025 !important;
+  padding-left: 8px !important;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .chrome-translation-progress-modal {
+    min-width: 320px;
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .chrome-translation-progress-header {
+    padding: 20px 20px 12px 20px;
+  }
+  
+  .chrome-translation-progress-header h3 {
+    font-size: 16px;
+  }
+  
+  .chrome-translation-progress-content {
+    padding: 20px;
+  }
+  
+  .chrome-translation-progress-actions {
+    padding: 12px 20px 20px 20px;
+    flex-direction: column;
+  }
+  
+  .chrome-translation-error-notification {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    min-width: auto;
+  }
+}
+
+/* Dark Mode Support for New Elements */
+@media (prefers-color-scheme: dark) {
+  .chrome-translation-progress-overlay {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  
+  .chrome-translation-progress-modal {
+    background: #1f1f1f;
+    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .chrome-translation-progress-header {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .chrome-translation-progress-header h3 {
+    color: #8ab4f8;
+  }
+  
+  .chrome-translation-progress-close {
+    color: #9aa0a6;
+  }
+  
+  .chrome-translation-progress-close:hover {
+    background-color: rgba(154, 160, 166, 0.1);
+    color: #e8eaed;
+  }
+  
+  .chrome-translation-progress-bar {
+    background-color: #404040;
+  }
+  
+  .chrome-translation-progress-text {
+    color: #e8eaed;
+  }
+  
+  .chrome-translation-progress-stats {
+    color: #9aa0a6;
+  }
+  
+  .chrome-translation-progress-current {
+    color: #8ab4f8;
+  }
+  
+  .chrome-translation-progress-total {
+    color: #9aa0a6;
+  }
+  
+  .chrome-translation-progress-actions {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .chrome-translation-progress-cancel {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
+    color: #9aa0a6;
+    border-color: rgba(154, 160, 166, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .chrome-translation-progress-cancel:hover {
+    background: linear-gradient(135deg, #383838 0%, #2d2d2d 100%);
+    border-color: #9aa0a6;
+    color: #e8eaed;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .chrome-translation-error-notification {
+    background: #1f1f1f;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .chrome-translation-error-content {
+    background: linear-gradient(135deg, #3d1a1a 0%, #2d1212 100%);
+    border-color: rgba(242, 139, 130, 0.2);
+  }
+  
+  .chrome-translation-error-content::before {
+    background: linear-gradient(180deg, #f28b82 0%, #ea4335 100%);
+  }
+  
+  .chrome-translation-error-message {
+    color: #f28b82;
+  }
+  
+  .chrome-translation-error-close {
+    color: #f28b82;
+  }
+  
+  .chrome-translation-error-close:hover {
+    background-color: rgba(242, 139, 130, 0.1);
+  }
+  
+  .chrome-translated-element::after {
+    border-color: rgba(52, 168, 83, 0.5);
+  }
+  
+  .chrome-translating-element {
+    background: linear-gradient(90deg, transparent, rgba(138, 180, 248, 0.1), transparent);
+  }
+  
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .chrome-translation-progress-modal {
+    border: 2px solid;
+  }
+  
+  .chrome-translation-progress-bar {
+    border: 1px solid;
+  }
+  
+  .chrome-translation-error-notification {
+    border: 2px solid;
+  }
+  
+  .chrome-translated-element::after {
+    border-width: 3px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .chrome-translation-progress-overlay,
+  .chrome-translation-progress-modal,
+  .chrome-translation-error-notification,
+  .chrome-translated-element,
+  .chrome-translating-element {
+    animation: none;
+    transition: none;
+  }
+  
+  .chrome-translation-progress-fill {
+    animation: none;
+  }
+  
+  .chrome-translating-element {
+    background: rgba(26, 115, 232, 0.1);
   }
 }
