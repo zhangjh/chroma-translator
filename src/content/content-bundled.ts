@@ -478,26 +478,15 @@ class ContentScript {
 
       this.selectedText = selectedText;
 
-      // Use mouse position as primary positioning, with selection bounds as fallback
+      // Always use mouse position for button positioning to ensure it appears near the cursor
       this.selectionPosition = { x, y };
 
-      // Get selection bounds for tooltip positioning later
+      // Get selection bounds for tooltip positioning later, but keep button at mouse position
       const selectionBounds = this.getSelectionBounds(selection);
       if (selectionBounds) {
         this.selectionPosition.width = selectionBounds.width;
         this.selectionPosition.height = selectionBounds.height;
-
-        // For better positioning, use selection bounds if available and more accurate
-        // Only use selection bounds if they seem reasonable (within 100px of mouse position)
-        if (selectionBounds.x > 0 && selectionBounds.y > 0 &&
-          Math.abs(selectionBounds.x - x) < 100 && Math.abs(selectionBounds.y - y) < 100) {
-          this.selectionPosition.x = selectionBounds.x;
-          this.selectionPosition.y = selectionBounds.y;
-        } else {
-          console.log('Using mouse position for positioning (selection bounds too far)');
-        }
-      } else {
-        console.log('No selection bounds available, using mouse position');
+        // Note: We intentionally don't override x,y coordinates to keep button at mouse position
       }
 
       // Add a small delay to stabilize button showing

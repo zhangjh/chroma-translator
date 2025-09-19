@@ -3,14 +3,15 @@
   position: absolute;
   width: 28px;
   height: 28px;
+  background-color: white;
   border-radius: 5px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2147483647;
-  opacity: 0;
+  opacity: 1;
   transform: scale(0.8);
   transition: all 0.2s ease;
   pointer-events: auto;
@@ -44,7 +45,7 @@
 }
 
 .chrome-translate-button-logo img {
-  width: 16px; 
+  width: 16px;
   height: 16px;
 }
 
@@ -55,13 +56,13 @@
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-button:hover {
     background: rgba(60, 60, 60, 1);
     border-color: rgba(138, 180, 248, 0.4);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
   }
-  
+
   .chrome-translate-button:active {
     background: rgba(30, 30, 30, 1);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -74,10 +75,12 @@
     opacity: 0;
     transform: scale(0.3);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.1);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -91,7 +94,8 @@
 /* Translation Tooltip Styles */
 .chrome-translate-tooltip {
   position: fixed;
-  z-index: 2147483647; /* Maximum z-index to ensure tooltip appears above all content */
+  z-index: 2147483647;
+  /* Maximum z-index to ensure tooltip appears above all content */
   background: #ffffff;
   border: none;
   border-radius: 12px;
@@ -385,13 +389,25 @@
 }
 
 @keyframes chrome-translate-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes chrome-translate-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes chrome-translate-slide-in {
@@ -399,6 +415,7 @@
     opacity: 0;
     transform: translateX(-10px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -410,6 +427,7 @@
     opacity: 0;
     transform: translateY(4px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -450,7 +468,7 @@
   .chrome-translate-tooltip-button:focus {
     outline-color: #8ab4f8;
   }
-  
+
   .chrome-translate-tooltip-close:focus {
     outline-color: #8ab4f8;
   }
@@ -607,37 +625,37 @@
     font-size: 13px;
     margin: 8px;
   }
-  
+
   .chrome-translate-tooltip-header {
     padding: 12px 16px 8px 16px;
   }
-  
+
   .chrome-translate-tooltip-content {
     padding: 0 16px 12px 16px;
   }
-  
+
   .chrome-translate-tooltip-actions {
     flex-direction: column;
     padding: 12px 16px;
     gap: 6px;
   }
-  
+
   .chrome-translate-tooltip-original,
   .chrome-translate-tooltip-result,
   .chrome-translate-tooltip-loading,
   .chrome-translate-tooltip-error {
     padding: 12px;
   }
-  
+
   /* Reduce max heights on mobile for better space usage */
   .chrome-translate-tooltip-original {
     max-height: 60px;
   }
-  
+
   .chrome-translate-tooltip-result {
     max-height: 90px;
   }
-  
+
   .chrome-translate-tooltip-error {
     max-height: 80px;
   }
@@ -663,8 +681,13 @@
 }
 
 @keyframes chrome-translate-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .chrome-translate-translated {
@@ -804,216 +827,217 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
     color: #e8eaed;
   }
-  
+
   .chrome-translate-tooltip::before {
     background: #1f1f1f;
     box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip.below-selection::before {
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip.above-selection::before {
     box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip.left-selection::before {
     box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip.right-selection::before {
     box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip-header {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translate-tooltip-title {
     color: #8ab4f8;
   }
-  
+
   .chrome-translate-tooltip-close {
     color: #9aa0a6;
   }
-  
+
   .chrome-translate-tooltip-close:hover {
     background-color: rgba(154, 160, 166, 0.1);
     color: #e8eaed;
   }
-  
+
   .chrome-translate-tooltip-original {
     background: linear-gradient(135deg, #2d2d2d 0%, #262626 100%);
     color: #9aa0a6;
     border-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translate-tooltip-original::before {
     background: linear-gradient(180deg, #5f6368 0%, #4a4a4a 100%);
   }
-  
+
   .chrome-translate-tooltip-result {
     background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
     color: #e8eaed;
     border-color: rgba(138, 180, 248, 0.2);
     box-shadow: 0 1px 3px rgba(138, 180, 248, 0.1);
   }
-  
+
   .chrome-translate-tooltip-result::before {
     background: linear-gradient(180deg, #8ab4f8 0%, #4285f4 100%);
   }
-  
+
   .chrome-translate-tooltip-loading {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-color: rgba(255, 255, 255, 0.1);
     color: #9aa0a6;
   }
-  
+
   .chrome-translate-tooltip-spinner {
     border-color: rgba(138, 180, 248, 0.2);
     border-top-color: #8ab4f8;
   }
-  
+
   .chrome-translate-tooltip-error {
     background: linear-gradient(135deg, #2d1212 0%, #3d1a1a 100%);
     color: #f28b82;
     border-color: rgba(242, 139, 130, 0.15);
     box-shadow: 0 1px 3px rgba(242, 139, 130, 0.08);
   }
-  
+
   .chrome-translate-tooltip-error::before {
     background: linear-gradient(180deg, #f28b82 0%, #ea4335 100%);
   }
-  
+
   /* Dark mode scrollbar styles */
   .chrome-translate-tooltip-original::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translate-tooltip-original::-webkit-scrollbar-thumb {
     background: rgba(154, 160, 166, 0.4);
   }
-  
+
   .chrome-translate-tooltip-original::-webkit-scrollbar-thumb:hover {
     background: rgba(154, 160, 166, 0.6);
   }
-  
+
   .chrome-translate-tooltip-result::-webkit-scrollbar-track {
     background: rgba(138, 180, 248, 0.1);
   }
-  
+
   .chrome-translate-tooltip-result::-webkit-scrollbar-thumb {
     background: rgba(138, 180, 248, 0.4);
   }
-  
+
   .chrome-translate-tooltip-result::-webkit-scrollbar-thumb:hover {
     background: rgba(138, 180, 248, 0.6);
   }
-  
+
   .chrome-translate-tooltip-error::-webkit-scrollbar-track {
     background: rgba(242, 139, 130, 0.1);
   }
-  
+
   .chrome-translate-tooltip-error::-webkit-scrollbar-thumb {
     background: rgba(242, 139, 130, 0.4);
   }
-  
+
   .chrome-translate-tooltip-error::-webkit-scrollbar-thumb:hover {
     background: rgba(242, 139, 130, 0.6);
   }
-  
+
   /* Dark mode scroll fade effects */
   .chrome-translate-tooltip-original.has-scroll::after {
     background: linear-gradient(transparent, rgba(45, 45, 45, 0.8));
   }
-  
+
   .chrome-translate-tooltip-result.has-scroll::after {
     background: linear-gradient(transparent, rgba(26, 35, 50, 0.8));
   }
-  
+
   .chrome-translate-tooltip-error.has-scroll::after {
     background: linear-gradient(transparent, rgba(61, 26, 26, 0.8));
   }
-  
+
   .chrome-translate-tooltip-actions {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-top-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translate-tooltip-button {
     background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
     box-shadow: 0 1px 3px rgba(138, 180, 248, 0.3);
   }
-  
+
   .chrome-translate-tooltip-button:hover {
     background: linear-gradient(135deg, #1557b0 0%, #3367d6 100%);
     box-shadow: 0 2px 8px rgba(138, 180, 248, 0.4);
   }
-  
+
   .chrome-translate-tooltip-button:disabled {
     background: linear-gradient(135deg, #3c4043 0%, #2d2d2d 100%);
     color: #5f6368;
   }
-  
+
   .chrome-translate-tooltip-button.secondary {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     color: #8ab4f8;
     border-color: rgba(138, 180, 248, 0.2);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translate-tooltip-button.secondary:hover {
     background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
     border-color: #8ab4f8;
     color: #aecbfa;
     box-shadow: 0 2px 8px rgba(138, 180, 248, 0.2);
   }
-  
+
   /* Dark mode for full page translation */
   .chrome-translate-updating {
     background-color: #3d3d1a !important;
   }
-  
+
   .chrome-translate-translated {
     background-color: #1a3d1a !important;
     border-left-color: #34a853 !important;
   }
-  
+
   .chrome-translate-progress {
     background: #2d2d2d;
     border-bottom-color: #404040;
     color: #e0e0e0;
   }
-  
+
   .chrome-translate-progress-title {
     color: #e0e0e0;
   }
-  
+
   .chrome-translate-progress-button {
     background: #383838;
     color: #e0e0e0;
     border-color: #404040;
   }
-  
+
   .chrome-translate-progress-button:hover {
     background: #404040;
   }
-  
+
   .chrome-translate-progress-bar {
     background-color: #404040;
   }
-  
+
   .chrome-translate-progress-info {
     color: #b0b0b0;
   }
-  
+
   .chrome-translate-current {
     outline-color: #4285f4 !important;
     background-color: rgba(66, 133, 244, 0.2) !important;
   }
 }
+
 /* 
 Full Page Translation Progress Overlay */
 .chrome-translation-progress-overlay {
@@ -1127,8 +1151,13 @@ Full Page Translation Progress Overlay */
 }
 
 @keyframes chrome-translation-progress-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .chrome-translation-progress-text {
@@ -1215,6 +1244,7 @@ Full Page Translation Progress Overlay */
     opacity: 0;
     transform: translateX(100%) scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -1314,8 +1344,13 @@ Full Page Translation Progress Overlay */
 }
 
 @keyframes chrome-translating-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .chrome-translation-animated {
@@ -1327,10 +1362,12 @@ Full Page Translation Progress Overlay */
     background-color: rgba(52, 168, 83, 0.2);
     transform: scale(1);
   }
+
   50% {
     background-color: rgba(52, 168, 83, 0.4);
     transform: scale(1.02);
   }
+
   100% {
     background-color: transparent;
     transform: scale(1);
@@ -1439,8 +1476,13 @@ Full Page Translation Progress Overlay */
 }
 
 @keyframes chrome-translation-floating-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .chrome-translation-floating-text {
@@ -1480,15 +1522,15 @@ Full Page Translation Progress Overlay */
     min-width: auto;
     max-width: none;
   }
-  
+
   .chrome-translation-floating-header {
     padding: 12px 16px 8px 16px;
   }
-  
+
   .chrome-translation-floating-progress {
     padding: 12px 16px 16px 16px;
   }
-  
+
   .chrome-translation-floating-text {
     font-size: 12px;
   }
@@ -1501,64 +1543,66 @@ Full Page Translation Progress Overlay */
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translation-floating-header {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translation-floating-title {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-floating-close {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-floating-close:hover {
     background-color: rgba(154, 160, 166, 0.1);
     color: #e8eaed;
   }
-  
+
   .chrome-translation-floating-bar {
     background-color: #404040;
   }
-  
+
   .chrome-translation-floating-text {
     color: #e8eaed;
   }
-  
+
   .chrome-translation-floating-stats {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-floating-current {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-floating-total {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-animated {
     animation: chrome-translation-success-dark 0.6s ease-out;
   }
-  
+
   @keyframes chrome-translation-success-dark {
     0% {
       background-color: rgba(52, 168, 83, 0.3);
       transform: scale(1);
     }
+
     50% {
       background-color: rgba(52, 168, 83, 0.5);
       transform: scale(1.02);
     }
+
     100% {
       background-color: transparent;
       transform: scale(1);
     }
   }
-  
+
   .chrome-translating-element {
     background: linear-gradient(90deg, transparent, rgba(138, 180, 248, 0.15), transparent);
   }
@@ -1582,24 +1626,24 @@ Full Page Translation Progress Overlay */
     width: 95vw;
     margin: 20px;
   }
-  
+
   .chrome-translation-progress-header {
     padding: 20px 20px 12px 20px;
   }
-  
+
   .chrome-translation-progress-header h3 {
     font-size: 16px;
   }
-  
+
   .chrome-translation-progress-content {
     padding: 20px;
   }
-  
+
   .chrome-translation-progress-actions {
     padding: 12px 20px 20px 20px;
     flex-direction: column;
   }
-  
+
   .chrome-translation-error-notification {
     top: 10px;
     right: 10px;
@@ -1614,103 +1658,103 @@ Full Page Translation Progress Overlay */
   .chrome-translation-progress-overlay {
     background: rgba(0, 0, 0, 0.7);
   }
-  
+
   .chrome-translation-progress-modal {
     background: #1f1f1f;
     box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translation-progress-header {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translation-progress-header h3 {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-progress-close {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-progress-close:hover {
     background-color: rgba(154, 160, 166, 0.1);
     color: #e8eaed;
   }
-  
+
   .chrome-translation-progress-bar {
     background-color: #404040;
   }
-  
+
   .chrome-translation-progress-text {
     color: #e8eaed;
   }
-  
+
   .chrome-translation-progress-stats {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-progress-current {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-progress-total {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-progress-actions {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-top-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translation-progress-cancel {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     color: #9aa0a6;
     border-color: rgba(154, 160, 166, 0.2);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translation-progress-cancel:hover {
     background: linear-gradient(135deg, #383838 0%, #2d2d2d 100%);
     border-color: #9aa0a6;
     color: #e8eaed;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
-  
+
   .chrome-translation-error-notification {
     background: #1f1f1f;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translation-error-content {
     background: linear-gradient(135deg, #3d1a1a 0%, #2d1212 100%);
     border-color: rgba(242, 139, 130, 0.2);
   }
-  
+
   .chrome-translation-error-content::before {
     background: linear-gradient(180deg, #f28b82 0%, #ea4335 100%);
   }
-  
+
   .chrome-translation-error-message {
     color: #f28b82;
   }
-  
+
   .chrome-translation-error-close {
     color: #f28b82;
   }
-  
+
   .chrome-translation-error-close:hover {
     background-color: rgba(242, 139, 130, 0.1);
   }
-  
+
   .chrome-translated-element::after {
     border-color: rgba(52, 168, 83, 0.5);
   }
-  
+
   .chrome-translating-element {
     background: linear-gradient(90deg, transparent, rgba(138, 180, 248, 0.1), transparent);
   }
-  
+
 }
 
 /* High Contrast Mode Support */
@@ -1718,15 +1762,15 @@ Full Page Translation Progress Overlay */
   .chrome-translation-progress-modal {
     border: 2px solid;
   }
-  
+
   .chrome-translation-progress-bar {
     border: 1px solid;
   }
-  
+
   .chrome-translation-error-notification {
     border: 2px solid;
   }
-  
+
   .chrome-translated-element::after {
     border-width: 3px;
   }
@@ -1734,6 +1778,7 @@ Full Page Translation Progress Overlay */
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
+
   .chrome-translation-progress-overlay,
   .chrome-translation-progress-modal,
   .chrome-translation-error-notification,
@@ -1742,15 +1787,16 @@ Full Page Translation Progress Overlay */
     animation: none;
     transition: none;
   }
-  
+
   .chrome-translation-progress-fill {
     animation: none;
   }
-  
+
   .chrome-translating-element {
     background: rgba(26, 115, 232, 0.1);
   }
 }
+
 /* Trans
 lation Container Styles - for side-by-side original and translated text */
 .chrome-translation-container {
@@ -1805,6 +1851,7 @@ lation Container Styles - for side-by-side original and translated text */
     opacity: 0;
     transform: translateX(-4px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -1820,18 +1867,18 @@ lation Container Styles - for side-by-side original and translated text */
   .chrome-translation-separator {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-translated {
     color: #aecbfa;
     background: linear-gradient(135deg, rgba(138, 180, 248, 0.12) 0%, rgba(66, 133, 244, 0.08) 100%);
     border-left-color: rgba(138, 180, 248, 0.4);
   }
-  
+
   .chrome-translation-container:hover .chrome-translation-translated {
     background: linear-gradient(135deg, rgba(138, 180, 248, 0.18) 0%, rgba(66, 133, 244, 0.12) 100%);
     border-left-color: rgba(138, 180, 248, 0.6);
   }
-  
+
   .chrome-translation-container:hover .chrome-translation-separator {
     color: #aecbfa;
   }
@@ -1843,18 +1890,18 @@ lation Container Styles - for side-by-side original and translated text */
     display: block;
     margin: 2px 0;
   }
-  
+
   .chrome-translation-separator {
     display: block;
     margin: 4px 0;
     text-align: center;
     font-size: 12px;
   }
-  
+
   .chrome-translation-separator::before {
     content: '↓ ';
   }
-  
+
   .chrome-translation-translated {
     display: block;
     margin: 4px 0;
@@ -1954,11 +2001,14 @@ p .chrome-translation-translated {
 
 /* Print styles - hide translations in print */
 @media print {
+
   .chrome-translation-separator,
   .chrome-translation-translated {
     display: none !important;
   }
-}/* Floa
+}
+
+/* Floa
 ting Progress Indicator Styles */
 .chrome-translation-floating-progress {
   position: fixed;
@@ -2056,8 +2106,13 @@ ting Progress Indicator Styles */
 }
 
 @keyframes chrome-translation-floating-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .chrome-translation-floating-text {
@@ -2094,41 +2149,41 @@ ting Progress Indicator Styles */
     background: #1f1f1f;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
   }
-  
+
   .chrome-translation-floating-header {
     background: linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%);
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .chrome-translation-floating-title {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-floating-close {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-floating-close:hover {
     background-color: rgba(154, 160, 166, 0.1);
     color: #e8eaed;
   }
-  
+
   .chrome-translation-floating-bar {
     background-color: #404040;
   }
-  
+
   .chrome-translation-floating-text {
     color: #e8eaed;
   }
-  
+
   .chrome-translation-floating-stats {
     color: #9aa0a6;
   }
-  
+
   .chrome-translation-floating-current {
     color: #8ab4f8;
   }
-  
+
   .chrome-translation-floating-total {
     color: #9aa0a6;
   }
@@ -2143,19 +2198,19 @@ ting Progress Indicator Styles */
     min-width: auto;
     max-width: none;
   }
-  
+
   .chrome-translation-floating-header {
     padding: 12px 16px 8px 16px;
   }
-  
+
   .chrome-translation-floating-progress {
     padding: 12px 16px 16px 16px;
   }
-  
+
   .chrome-translation-floating-title {
     font-size: 13px;
   }
-  
+
   .chrome-translation-floating-text {
     font-size: 12px;
   }
