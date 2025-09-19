@@ -1,24 +1,19 @@
 /* Translate Button Styles */
 .chrome-translate-button {
-  position: fixed;
-  z-index: 2147483646; /* One less than tooltip to ensure tooltip appears above */
+  position: absolute;
   width: 28px;
   height: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2147483647;
   opacity: 0;
   transform: scale(0.8);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  will-change: transform, opacity;
-  contain: layout style paint;
+  transition: all 0.2s ease;
+  pointer-events: auto;
 }
 
 .chrome-translate-button.visible {
@@ -48,13 +43,9 @@
   position: relative;
 }
 
-.chrome-translate-button-text {
-  width: 16px;
+.chrome-translate-button-logo img {
+  width: 16px; 
   height: 16px;
-  pointer-events: none;
-  background: transparent;
-  border: none;
-  object-fit: contain;
 }
 
 /* Dark mode support for translate button */

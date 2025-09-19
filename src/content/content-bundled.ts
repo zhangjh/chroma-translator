@@ -486,9 +486,19 @@ class ContentScript {
       if (selectionBounds) {
         this.selectionPosition.width = selectionBounds.width;
         this.selectionPosition.height = selectionBounds.height;
+
+        // For better positioning, use selection bounds if available and more accurate
+        // Only use selection bounds if they seem reasonable (within 100px of mouse position)
+        if (selectionBounds.x > 0 && selectionBounds.y > 0 &&
+          Math.abs(selectionBounds.x - x) < 100 && Math.abs(selectionBounds.y - y) < 100) {
+          this.selectionPosition.x = selectionBounds.x;
+          this.selectionPosition.y = selectionBounds.y;
+        } else {
+          console.log('Using mouse position for positioning (selection bounds too far)');
+        }
+      } else {
+        console.log('No selection bounds available, using mouse position');
       }
-
-
 
       // Add a small delay to stabilize button showing
       this.buttonShowTimeout = setTimeout(() => {
@@ -562,6 +572,7 @@ class ContentScript {
         if (!rect || rect.width === 0 && rect.height === 0) {
           return null;
         }
+        // getBoundingClientRect() returns viewport coordinates, which is what we want
         return {
           x: rect.left + rect.width / 2,
           y: rect.top,
@@ -573,8 +584,8 @@ class ContentScript {
       // Filter out invalid rects
       const validRects = Array.from(rects).filter(rect =>
         rect && rect.width > 0 && rect.height > 0 &&
-        rect.left >= 0 && rect.top >= 0 &&
-        rect.left < window.innerWidth && rect.top < window.innerHeight
+        rect.left >= -window.innerWidth && rect.top >= -window.innerHeight &&
+        rect.right <= window.innerWidth * 2 && rect.bottom <= window.innerHeight * 2
       );
 
       if (validRects.length === 0) {
@@ -591,17 +602,13 @@ class ContentScript {
       const top = firstRect.top;
       const bottom = lastRect.bottom;
 
-      // Ensure bounds are within viewport
-      const clampedLeft = Math.max(0, Math.min(left, window.innerWidth));
-      const clampedRight = Math.max(clampedLeft, Math.min(right, window.innerWidth));
-      const clampedTop = Math.max(0, Math.min(top, window.innerHeight));
-      const clampedBottom = Math.max(clampedTop, Math.min(bottom, window.innerHeight));
-
+      // Don't clamp to viewport here since we want to preserve the actual selection position
+      // The positioning logic will handle viewport constraints
       return {
-        x: clampedLeft + (clampedRight - clampedLeft) / 2, // Center horizontally
-        y: clampedTop, // Use top of first line
-        width: clampedRight - clampedLeft,
-        height: clampedBottom - clampedTop
+        x: left + (right - left) / 2, // Center horizontally
+        y: top, // Use top of first line
+        width: right - left,
+        height: bottom - top
       };
     } catch (error) {
       console.warn('Failed to get selection bounds:', error);
@@ -629,6 +636,8 @@ class ContentScript {
     // Show button with animation
     setTimeout(() => {
       if (this.translateButton) {
+        this.translateButton.style.opacity = '1';
+        this.translateButton.style.transform = 'scale(1)';
         this.translateButton.classList.add('visible', 'bounce');
       }
     }, 10);
@@ -657,10 +666,9 @@ class ContentScript {
       iconUrl = chrome.runtime.getURL(manifest.icons['16']);
     }
 
-    // Use simple text icon for better compatibility
     button.innerHTML = `
       <div class="chrome-translate-button-logo">
-        <img src="${iconUrl}" class="chrome-translate-button-text" />
+        <img src="${iconUrl}" alt="Translate" />
       </div>
     `;
 
@@ -686,21 +694,24 @@ class ContentScript {
     const button = this.translateButton;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const scrollX = window.pageXOffset;
-    const scrollY = window.pageYOffset;
+
+    // Get scroll position - use multiple methods for better compatibility
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
 
     const buttonSize = 28; // Button is 28x28px
     const offset = 8; // Distance from cursor
     const margin = 12; // Margin from viewport edges
 
-    // Convert viewport coordinates to page coordinates
-    const mouseX = position.x + scrollX;
-    const mouseY = position.y + scrollY;
+    // position.x and position.y are viewport coordinates from mouse event
+    // For absolute positioning, we need page coordinates (viewport + scroll)
+    const mousePageX = position.x + scrollX;
+    const mousePageY = position.y + scrollY;
 
     let left: number;
     let top: number;
 
-    // Calculate available space in all directions from mouse position
+    // Calculate available space in all directions from mouse position (in viewport coordinates)
     const spaceRight = viewportWidth - position.x;
     const spaceLeft = position.x;
     const spaceBelow = viewportHeight - position.y;
@@ -710,39 +721,48 @@ class ContentScript {
     // Priority: bottom-right, bottom-left, top-right, top-left
     if (spaceRight >= buttonSize + margin && spaceBelow >= buttonSize + margin) {
       // Bottom-right of cursor
-      left = mouseX + offset;
-      top = mouseY + offset;
+      left = mousePageX + offset;
+      top = mousePageY + offset;
     } else if (spaceLeft >= buttonSize + margin && spaceBelow >= buttonSize + margin) {
       // Bottom-left of cursor
-      left = mouseX - buttonSize - offset;
-      top = mouseY + offset;
+      left = mousePageX - buttonSize - offset;
+      top = mousePageY + offset;
     } else if (spaceRight >= buttonSize + margin && spaceAbove >= buttonSize + margin) {
       // Top-right of cursor
-      left = mouseX + offset;
-      top = mouseY - buttonSize - offset;
+      left = mousePageX + offset;
+      top = mousePageY - buttonSize - offset;
     } else if (spaceLeft >= buttonSize + margin && spaceAbove >= buttonSize + margin) {
       // Top-left of cursor
-      left = mouseX - buttonSize - offset;
-      top = mouseY - buttonSize - offset;
+      left = mousePageX - buttonSize - offset;
+      top = mousePageY - buttonSize - offset;
     } else {
       // Fallback: position at cursor with boundary constraints
-      left = mouseX;
-      top = mouseY - buttonSize - offset;
+      left = mousePageX;
+      top = mousePageY - buttonSize - offset;
     }
 
-    // Apply viewport boundary constraints
-    left = Math.max(scrollX + margin, Math.min(left, scrollX + viewportWidth - buttonSize - margin));
-    top = Math.max(scrollY + margin, Math.min(top, scrollY + viewportHeight - buttonSize - margin));
+    // Apply viewport boundary constraints (in page coordinates)
+    const minLeft = scrollX + margin;
+    const maxLeft = scrollX + viewportWidth - buttonSize - margin;
+    const minTop = scrollY + margin;
+    const maxTop = scrollY + viewportHeight - buttonSize - margin;
 
-    // Apply positioning
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+    top = Math.max(minTop, Math.min(top, maxTop));
+
+    // Ensure the button uses absolute positioning relative to the document
+    button.style.position = 'absolute';
     button.style.left = `${Math.round(left)}px`;
     button.style.top = `${Math.round(top)}px`;
+    button.style.zIndex = '2147483647'; // Maximum z-index
 
     console.log('Button positioned at:', {
-      left: Math.round(left),
-      top: Math.round(top),
-      mousePos: { x: position.x, y: position.y },
-      spaces: { right: spaceRight, left: spaceLeft, below: spaceBelow, above: spaceAbove }
+      finalPosition: { left: Math.round(left), top: Math.round(top) },
+      mouseViewport: { x: position.x, y: position.y },
+      mousePage: { x: mousePageX, y: mousePageY },
+      scroll: { x: scrollX, y: scrollY },
+      spaces: { right: spaceRight, left: spaceLeft, below: spaceBelow, above: spaceAbove },
+      constraints: { minLeft, maxLeft, minTop, maxTop }
     });
   }
 
@@ -892,8 +912,8 @@ class ContentScript {
     const tooltip = this.tooltip;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const scrollX = window.pageXOffset;
-    const scrollY = window.pageYOffset;
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
     // Force a layout to get accurate dimensions
     tooltip.style.visibility = 'hidden';
@@ -909,13 +929,17 @@ class ContentScript {
     const offset = 16; // Offset from selection
     const margin = 20; // Margin from viewport edges
 
-    // Calculate available space in all directions
-    const spaceAbove = position.y - scrollY;
-    const spaceBelow = scrollY + viewportHeight - (position.y + selectionHeight);
-    const spaceLeft = position.x - scrollX;
-    const spaceRight = scrollX + viewportWidth - position.x;
+    // Convert viewport coordinates to page coordinates
+    const selectionPageX = position.x + scrollX;
+    const selectionPageY = position.y + scrollY;
 
-    let left: number = position.x - tooltipWidth / 2; // Initialize with default value
+    // Calculate available space in all directions (in viewport coordinates)
+    const spaceAbove = position.y;
+    const spaceBelow = viewportHeight - (position.y + selectionHeight);
+    const spaceLeft = position.x;
+    const spaceRight = viewportWidth - position.x;
+
+    let left: number;
     let top: number;
     let placement = 'above'; // 'above', 'below', 'left', 'right'
 
@@ -926,35 +950,39 @@ class ContentScript {
     if (spaceBelow >= needsHeight) {
       // Prefer below if there's enough space
       placement = 'below';
-      top = position.y + selectionHeight + offset;
+      top = selectionPageY + selectionHeight + offset;
+      left = selectionPageX - tooltipWidth / 2; // Initialize left for above/below placements
     } else if (spaceAbove >= needsHeight) {
       // Use above if there's enough space
       placement = 'above';
-      top = position.y - tooltipHeight - offset;
+      top = selectionPageY - tooltipHeight - offset;
+      left = selectionPageX - tooltipWidth / 2; // Initialize left for above/below placements
     } else if (spaceRight >= needsWidth && spaceRight > spaceLeft) {
       // Try right side
       placement = 'right';
-      left = position.x + selectionWidth / 2 + offset;
-      top = position.y + selectionHeight / 2 - tooltipHeight / 2;
+      left = selectionPageX + selectionWidth / 2 + offset;
+      top = selectionPageY + selectionHeight / 2 - tooltipHeight / 2;
     } else if (spaceLeft >= needsWidth) {
       // Try left side
       placement = 'left';
-      left = position.x - selectionWidth / 2 - tooltipWidth - offset;
-      top = position.y + selectionHeight / 2 - tooltipHeight / 2;
+      left = selectionPageX - selectionWidth / 2 - tooltipWidth - offset;
+      top = selectionPageY + selectionHeight / 2 - tooltipHeight / 2;
     } else {
       // Fallback: use the side with more space, but constrain to viewport
       if (spaceBelow > spaceAbove) {
         placement = 'below';
-        top = Math.min(position.y + selectionHeight + offset, scrollY + viewportHeight - tooltipHeight - margin);
+        top = Math.min(selectionPageY + selectionHeight + offset, scrollY + viewportHeight - tooltipHeight - margin);
+        left = selectionPageX - tooltipWidth / 2; // Initialize left for fallback
       } else {
         placement = 'above';
-        top = Math.max(position.y - tooltipHeight - offset, scrollY + margin);
+        top = Math.max(selectionPageY - tooltipHeight - offset, scrollY + margin);
+        left = selectionPageX - tooltipWidth / 2; // Initialize left for fallback
       }
     }
 
     // Calculate horizontal position for above/below placements
     if (placement === 'above' || placement === 'below') {
-      left = position.x - tooltipWidth / 2;
+      left = selectionPageX - tooltipWidth / 2;
 
       // Adjust horizontal position if tooltip goes outside viewport
       if (left < scrollX + margin) {
@@ -973,7 +1001,7 @@ class ContentScript {
       }
     }
 
-    // Apply positioning
+    // Apply positioning using page coordinates
     tooltip.style.left = `${Math.round(left)}px`;
     tooltip.style.top = `${Math.round(top)}px`;
 
@@ -983,11 +1011,11 @@ class ContentScript {
 
     // Calculate arrow position for above/below placements
     if (placement === 'above' || placement === 'below') {
-      const arrowLeft = Math.max(20, Math.min(tooltipWidth - 20, position.x - left));
+      const arrowLeft = Math.max(20, Math.min(tooltipWidth - 20, selectionPageX - left));
       tooltip.style.setProperty('--arrow-offset', `${arrowLeft}px`);
     } else {
       // For side placements, center the arrow vertically
-      const arrowTop = Math.max(20, Math.min(tooltipHeight - 20, (position.y + selectionHeight / 2) - top));
+      const arrowTop = Math.max(20, Math.min(tooltipHeight - 20, (selectionPageY + selectionHeight / 2) - top));
       tooltip.style.setProperty('--arrow-offset', `${arrowTop}px`);
     }
 
