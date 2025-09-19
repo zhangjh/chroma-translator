@@ -4,6 +4,14 @@
 
 一个基于Chrome内置AI的智能翻译扩展，完全免费、无需API密钥、离线可用。提供输入框翻译、选中文本翻译和网页全文翻译等多种翻译方式，让翻译更简单、更高效。
 
+### 使用须知
+使用此插件你必须：
+将该链接：chrome://flags/#writer-api-for-gemini-nano 复制粘贴进Chrome访问，开启build-in AI支持，确保translation ai和detector ai能力处于开放状态。
+
+<img width="953" height="160" alt="image" src="https://github.com/user-attachments/assets/d75fe0ed-fba8-4070-934a-c320f1acbbbf" />
+<img width="1017" height="287" alt="image" src="https://github.com/user-attachments/assets/a5dbaef3-17be-4d3e-8916-9a9e58c06f8a" />
+
+
 ## 🎯 为什么选择ChromaTranslator？
 
 ### 🆓 完全免费 - 基于Chrome内置AI
