@@ -4,6 +4,13 @@
 
 An intelligent translation extension powered by Chrome's built-in AI, completely free, no API keys required, and works offline. Provides multiple translation methods including input box translation, selected text translation, and full webpage translation.
 
+## Instruction for use
+First of all, you must copy and paste this link **chrome://flags/#writer-api-for-gemini-nano** to your Chrome, and ensure the translation ai & detector ai enabled.
+<img width="1017" height="287" alt="image" src="https://github.com/user-attachments/assets/42ddb820-f780-400c-b5d3-b26eb05f9f0d" />
+<img width="953" height="160" alt="image" src="https://github.com/user-attachments/assets/768ed1bb-fd9a-41c9-882c-34e646bcf2fa" />
+
+
+
 ## 🎯 Why Choose ChromaTranslator?
 
 ### 🆓 Completely Free - Powered by Chrome Built-in AI
