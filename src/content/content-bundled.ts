@@ -322,7 +322,7 @@ class ContentScript {
    */
   private init(): void {
     this.setupTextSelectionDetection();
-    console.log('Content script loaded and initialized');
+    console.log('ChromaTranslator content script initialized');
   }
 
   /**
@@ -399,11 +399,25 @@ class ContentScript {
    * Set up text selection detection
    */
   private setupTextSelectionDetection(): void {
-    // Listen for mouseup events to detect text selection
-    document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+    // Primary event listeners
+    document.addEventListener('mouseup', this.handleMouseUp.bind(this), { passive: true });
+    document.addEventListener('selectionchange', this.handleSelectionChange.bind(this), { passive: true });
 
-    // Listen for selection change events
-    document.addEventListener('selectionchange', this.handleSelectionChange.bind(this));
+    // Handle dynamic content changes
+    if (window.MutationObserver) {
+      const observer = new MutationObserver(() => {
+        // Re-check selection after DOM changes
+        setTimeout(() => {
+          this.handleSelectionChange();
+        }, 100);
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false
+      });
+    }
   }
 
   /**
@@ -411,8 +425,6 @@ class ContentScript {
    */
   private handleMouseUp(event: MouseEvent): void {
     // Small delay to ensure selection is complete
-    console.log("mouseUp");
-
     this.processTextSelection(event.clientX, event.clientY);
   }
 
@@ -444,48 +456,90 @@ class ContentScript {
    * Process text selection and validate it
    */
   private processTextSelection(x: number, y: number): void {
-    // Clear any pending button show timeout
-    if (this.buttonShowTimeout) {
-      clearTimeout(this.buttonShowTimeout);
-    }
-
-    const selection = window.getSelection();
-    if (selection) {
-      this.selectedText = selection.toString().trim();
-    }
-    if (!this.selectedText) {
-      this.hideTranslateButton();
-      return;
-    }
-
-    // Use mouse position as primary positioning, with selection bounds as fallback
-    // This ensures the button appears near where the user clicked
-    this.selectionPosition = { x, y };
-
-    // Get selection bounds for tooltip positioning later
-    const selectionBounds = this.getSelectionBounds(selection);
-    if (selectionBounds) {
-      // Store selection bounds for tooltip positioning
-      this.selectionPosition.width = selectionBounds.width;
-      this.selectionPosition.height = selectionBounds.height;
-    }
-
-    console.log('text selection detected:', {
-      text: this.selectedText,
-      position: this.selectionPosition,
-      length: this.selectedText.length
-    });
-
-    // Add a small delay to stabilize button showing
-    this.buttonShowTimeout = setTimeout(() => {
-      if (this.selectedText) { // Double check text is still selected
-        this.showTranslateButton(this.selectedText, this.selectionPosition);
+    try {
+      // Clear any pending button show timeout
+      if (this.buttonShowTimeout) {
+        clearTimeout(this.buttonShowTimeout);
       }
-    }, 150);
+
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) {
+        this.hideTranslateButton();
+        return;
+      }
+
+      const selectedText = selection.toString().trim();
+
+      // Validate selected text
+      if (!this.isValidTextSelection(selectedText)) {
+        this.hideTranslateButton();
+        return;
+      }
+
+      this.selectedText = selectedText;
+
+      // Use mouse position as primary positioning, with selection bounds as fallback
+      this.selectionPosition = { x, y };
+
+      // Get selection bounds for tooltip positioning later
+      const selectionBounds = this.getSelectionBounds(selection);
+      if (selectionBounds) {
+        this.selectionPosition.width = selectionBounds.width;
+        this.selectionPosition.height = selectionBounds.height;
+      }
+
+
+
+      // Add a small delay to stabilize button showing
+      this.buttonShowTimeout = setTimeout(() => {
+        if (this.selectedText && this.isValidTextSelection(this.selectedText)) {
+          this.showTranslateButton(this.selectedText, this.selectionPosition);
+        }
+      }, 150);
+    } catch (error) {
+      console.warn('Text selection processing failed:', error);
+      this.hideTranslateButton();
+    }
   }
 
   /**
-   * Get the bounds of the current text selection
+   * Validate if the selected text is worth translating
+   */
+  private isValidTextSelection(text: string): boolean {
+    if (!text || text.length < 2) {
+      return false;
+    }
+
+    // Skip if text is too long
+    if (text.length > CONFIG.MAX_TEXT_LENGTH) {
+      return false;
+    }
+
+    // Skip if text is only whitespace, numbers, or special characters
+    if (!/[a-zA-Z\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\u0400-\u04ff\u0100-\u017f\u1e00-\u1eff]/.test(text)) {
+      return false;
+    }
+
+    // Skip if text looks like a URL
+    if (/^https?:\/\//.test(text) || /^www\./.test(text)) {
+      return false;
+    }
+
+    // Skip if text looks like an email
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
+      return false;
+    }
+
+    // Skip if text is only punctuation
+    if (/^[^\w\s]+$/.test(text)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get the bounds of the current text selection with enhanced error handling
    */
   private getSelectionBounds(selection: Selection | null): { x: number; y: number; width: number; height: number } | null {
     if (!selection || selection.rangeCount === 0) {
@@ -494,12 +548,18 @@ class ContentScript {
 
     try {
       const range = selection.getRangeAt(0);
+
+      // Check if range is valid
+      if (!range || !range.startContainer || !range.endContainer) {
+        return null;
+      }
+
       const rects = range.getClientRects();
 
       if (rects.length === 0) {
         // Fallback to range bounding rect
         const rect = range.getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0) {
+        if (!rect || rect.width === 0 && rect.height === 0) {
           return null;
         }
         return {
@@ -510,9 +570,20 @@ class ContentScript {
         };
       }
 
-      // For multi-line selections, use the first line for positioning
-      const firstRect = rects[0];
-      const lastRect = rects[rects.length - 1];
+      // Filter out invalid rects
+      const validRects = Array.from(rects).filter(rect =>
+        rect && rect.width > 0 && rect.height > 0 &&
+        rect.left >= 0 && rect.top >= 0 &&
+        rect.left < window.innerWidth && rect.top < window.innerHeight
+      );
+
+      if (validRects.length === 0) {
+        return null;
+      }
+
+      // For multi-line selections, use the first valid line for positioning
+      const firstRect = validRects[0];
+      const lastRect = validRects[validRects.length - 1];
 
       // Calculate the overall bounds
       const left = Math.min(firstRect.left, lastRect.left);
@@ -520,11 +591,17 @@ class ContentScript {
       const top = firstRect.top;
       const bottom = lastRect.bottom;
 
+      // Ensure bounds are within viewport
+      const clampedLeft = Math.max(0, Math.min(left, window.innerWidth));
+      const clampedRight = Math.max(clampedLeft, Math.min(right, window.innerWidth));
+      const clampedTop = Math.max(0, Math.min(top, window.innerHeight));
+      const clampedBottom = Math.max(clampedTop, Math.min(bottom, window.innerHeight));
+
       return {
-        x: left + (right - left) / 2, // Center horizontally
-        y: top, // Use top of first line
-        width: right - left,
-        height: bottom - top
+        x: clampedLeft + (clampedRight - clampedLeft) / 2, // Center horizontally
+        y: clampedTop, // Use top of first line
+        width: clampedRight - clampedLeft,
+        height: clampedBottom - clampedTop
       };
     } catch (error) {
       console.warn('Failed to get selection bounds:', error);
@@ -2091,11 +2168,65 @@ class ContentScript {
   }
 }
 
-// Initialize content script when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new ContentScript();
-  });
-} else {
-  new ContentScript();
+// Enhanced initialization with multiple fallbacks
+let contentScriptInstance: ContentScript | null = null;
+
+function initializeContentScript() {
+  // Prevent multiple instances
+  if (contentScriptInstance) {
+    return;
+  }
+
+  try {
+    // Check if we're in a valid context
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    // Skip initialization in certain contexts
+    if (window.location.protocol === 'chrome-extension:' ||
+      window.location.protocol === 'moz-extension:' ||
+      window.location.protocol === 'chrome:' ||
+      window.location.protocol === 'about:') {
+      return;
+    }
+
+    // Skip if document is not available or is in an invalid state
+    if (!document.documentElement || document.documentElement.tagName !== 'HTML') {
+      return;
+    }
+
+    contentScriptInstance = new ContentScript();
+    console.log('Content script initialized successfully');
+  } catch (error) {
+    console.error('Content script initialization failed:', error);
+    // Retry after a delay
+    setTimeout(() => {
+      contentScriptInstance = null;
+      initializeContentScript();
+    }, 1000);
+  }
 }
+
+// Multiple initialization strategies for better compatibility
+function setupInitialization() {
+  // Strategy 1: Immediate initialization if DOM is ready
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initializeContentScript, 100);
+  }
+
+  // Strategy 2: DOMContentLoaded event
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeContentScript, { once: true });
+  }
+
+  // Strategy 3: Window load event as fallback
+  window.addEventListener('load', initializeContentScript, { once: true });
+
+  // Strategy 4: Delayed initialization for dynamic content
+  setTimeout(initializeContentScript, 500);
+  setTimeout(initializeContentScript, 2000);
+}
+
+// Start initialization
+setupInitialization();
