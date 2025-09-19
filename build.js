@@ -177,11 +177,11 @@ async function build() {
       // Create zip file for Chrome Web Store
       try {
         const archiver = require('archiver');
-        const output = fs.createWriteStream('chrome-translation-extension-v1.0.0.zip');
+        const output = fs.createWriteStream('chrome-translation-extension-v1.0.3.zip');
         const archive = archiver('zip', { zlib: { level: 9 } });
 
         output.on('close', () => {
-          console.log(`Release package created: chrome-translation-extension-v1.0.0.zip (${archive.pointer()} bytes)`);
+          console.log(`Release package created: chrome-translation-extension-v1.0.3.zip (${archive.pointer()} bytes)`);
         });
 
         archive.on('error', (err) => {
@@ -220,7 +220,7 @@ async function build() {
       console.log('3. Click "Load unpacked" and select this directory');
     } else {
       console.log('\nRelease package ready!');
-      console.log('- Upload chrome-translation-extension-v1.0.0.zip to Chrome Web Store');
+      console.log('- Upload chrome-translation-extension-v1.0.3.zip to Chrome Web Store');
       console.log('- Or use the "release" directory for manual installation');
     }
 
