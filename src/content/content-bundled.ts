@@ -667,6 +667,7 @@ class ContentScript {
     // Add click event listener
     button.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const textToTranslate = button.getAttribute('data-selected-text') || '';
       this.handleTranslateButtonClick(textToTranslate);
     });
@@ -901,8 +902,6 @@ class ContentScript {
     const tooltip = this.tooltip;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
     // Force a layout to get accurate dimensions
     tooltip.style.visibility = 'hidden';
@@ -918,9 +917,10 @@ class ContentScript {
     const offset = 16; // Offset from selection
     const margin = 20; // Margin from viewport edges
 
-    // Convert viewport coordinates to page coordinates
-    const selectionPageX = position.x + scrollX;
-    const selectionPageY = position.y + scrollY;
+    // Since tooltip uses position: fixed, we work with viewport coordinates
+    // position.x and position.y are already viewport coordinates
+    const selectionViewportX = position.x;
+    const selectionViewportY = position.y;
 
     // Calculate available space in all directions (in viewport coordinates)
     const spaceAbove = position.y;
@@ -939,58 +939,58 @@ class ContentScript {
     if (spaceBelow >= needsHeight) {
       // Prefer below if there's enough space
       placement = 'below';
-      top = selectionPageY + selectionHeight + offset;
-      left = selectionPageX - tooltipWidth / 2; // Initialize left for above/below placements
+      top = selectionViewportY + selectionHeight + offset;
+      left = selectionViewportX - tooltipWidth / 2; // Initialize left for above/below placements
     } else if (spaceAbove >= needsHeight) {
       // Use above if there's enough space
       placement = 'above';
-      top = selectionPageY - tooltipHeight - offset;
-      left = selectionPageX - tooltipWidth / 2; // Initialize left for above/below placements
+      top = selectionViewportY - tooltipHeight - offset;
+      left = selectionViewportX - tooltipWidth / 2; // Initialize left for above/below placements
     } else if (spaceRight >= needsWidth && spaceRight > spaceLeft) {
       // Try right side
       placement = 'right';
-      left = selectionPageX + selectionWidth / 2 + offset;
-      top = selectionPageY + selectionHeight / 2 - tooltipHeight / 2;
+      left = selectionViewportX + selectionWidth / 2 + offset;
+      top = selectionViewportY + selectionHeight / 2 - tooltipHeight / 2;
     } else if (spaceLeft >= needsWidth) {
       // Try left side
       placement = 'left';
-      left = selectionPageX - selectionWidth / 2 - tooltipWidth - offset;
-      top = selectionPageY + selectionHeight / 2 - tooltipHeight / 2;
+      left = selectionViewportX - selectionWidth / 2 - tooltipWidth - offset;
+      top = selectionViewportY + selectionHeight / 2 - tooltipHeight / 2;
     } else {
       // Fallback: use the side with more space, but constrain to viewport
       if (spaceBelow > spaceAbove) {
         placement = 'below';
-        top = Math.min(selectionPageY + selectionHeight + offset, scrollY + viewportHeight - tooltipHeight - margin);
-        left = selectionPageX - tooltipWidth / 2; // Initialize left for fallback
+        top = Math.min(selectionViewportY + selectionHeight + offset, viewportHeight - tooltipHeight - margin);
+        left = selectionViewportX - tooltipWidth / 2; // Initialize left for fallback
       } else {
         placement = 'above';
-        top = Math.max(selectionPageY - tooltipHeight - offset, scrollY + margin);
-        left = selectionPageX - tooltipWidth / 2; // Initialize left for fallback
+        top = Math.max(selectionViewportY - tooltipHeight - offset, margin);
+        left = selectionViewportX - tooltipWidth / 2; // Initialize left for fallback
       }
     }
 
     // Calculate horizontal position for above/below placements
     if (placement === 'above' || placement === 'below') {
-      left = selectionPageX - tooltipWidth / 2;
+      left = selectionViewportX - tooltipWidth / 2;
 
       // Adjust horizontal position if tooltip goes outside viewport
-      if (left < scrollX + margin) {
-        left = scrollX + margin;
-      } else if (left + tooltipWidth > scrollX + viewportWidth - margin) {
-        left = scrollX + viewportWidth - tooltipWidth - margin;
+      if (left < margin) {
+        left = margin;
+      } else if (left + tooltipWidth > viewportWidth - margin) {
+        left = viewportWidth - tooltipWidth - margin;
       }
     }
 
     // Ensure vertical position is within viewport for side placements
     if (placement === 'left' || placement === 'right') {
-      if (top < scrollY + margin) {
-        top = scrollY + margin;
-      } else if (top + tooltipHeight > scrollY + viewportHeight - margin) {
-        top = scrollY + viewportHeight - tooltipHeight - margin;
+      if (top < margin) {
+        top = margin;
+      } else if (top + tooltipHeight > viewportHeight - margin) {
+        top = viewportHeight - tooltipHeight - margin;
       }
     }
 
-    // Apply positioning using page coordinates
+    // Apply positioning using viewport coordinates (for position: fixed)
     tooltip.style.left = `${Math.round(left)}px`;
     tooltip.style.top = `${Math.round(top)}px`;
 
@@ -1000,23 +1000,21 @@ class ContentScript {
 
     // Calculate arrow position for above/below placements
     if (placement === 'above' || placement === 'below') {
-      const arrowLeft = Math.max(20, Math.min(tooltipWidth - 20, selectionPageX - left));
+      const arrowLeft = Math.max(20, Math.min(tooltipWidth - 20, selectionViewportX - left));
       tooltip.style.setProperty('--arrow-offset', `${arrowLeft}px`);
     } else {
       // For side placements, center the arrow vertically
-      const arrowTop = Math.max(20, Math.min(tooltipHeight - 20, (selectionPageY + selectionHeight / 2) - top));
+      const arrowTop = Math.max(20, Math.min(tooltipHeight - 20, (selectionViewportY + selectionHeight / 2) - top));
       tooltip.style.setProperty('--arrow-offset', `${arrowTop}px`);
     }
 
     console.log('Tooltip positioned:', {
       placement,
-      left: Math.round(left),
-      top: Math.round(top),
-      spaceAbove,
-      spaceBelow,
-      spaceLeft,
-      spaceRight,
-      tooltipSize: { width: tooltipWidth, height: tooltipHeight }
+      finalPosition: { left: Math.round(left), top: Math.round(top) },
+      selectionViewport: { x: selectionViewportX, y: selectionViewportY },
+      spaces: { above: spaceAbove, below: spaceBelow, left: spaceLeft, right: spaceRight },
+      tooltipSize: { width: tooltipWidth, height: tooltipHeight },
+      viewport: { width: viewportWidth, height: viewportHeight }
     });
   }
 

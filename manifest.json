@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChromaTranslator-彩译",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "ChromaTranslator - 多彩翻译工具：支持输入框翻译、选中文本翻译和网页全文翻译，使用Chrome内置AI提供高质量翻译服务",
   "author": "zhangjh",
   "homepage_url": "https://github.com/zhangjh/chroma-translator",
